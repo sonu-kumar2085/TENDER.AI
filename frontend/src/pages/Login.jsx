@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, EyeOff, RefreshCw, Plus, Building2 } from 'lucide-react';
+import { ShieldCheck, Eye, EyeOff, RefreshCw, Plus, Building2 } from 'lucide-react';
 import Modal from '../components/Modal';
 const Login = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -170,7 +170,7 @@ const Login = ({ onLogin }) => {
       <div className="w-full lg:w-[45%] bg-government-surface flex flex-col justify-center px-8 sm:px-16 relative animate-slideUp">
         <div className="absolute top-8 right-8 flex items-center gap-2 lg:hidden">
           <img src="/emblem.svg" alt="National Emblem" className="h-8 w-8 object-contain" />
-          <span className="text-government-primaryDark font-bold text-lg tracking-wide">TENDER</span>
+          <span className="text-government-primaryDark font-bold text-lg tracking-wide">TENDER.AI</span>
         </div>
 
         <div className="max-w-md w-full mx-auto">

@@ -33,8 +33,8 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
           <div className="space-y-2">
             <div className="text-white font-bold text-lg flex items-center gap-2">
-              <img src="/emblem.svg" alt="National Emblem" className="h-7 w-7 object-contain brightness-0 invert" />
-              TENDER
+              <img src="/emblem.svg" alt="National Emblem" className="h-5 w-5 object-contain brightness-0 invert" />
+              TENDER.AI
             </div>
             <div className="text-government-primaryPale">Government Procurement Intelligence System</div>
             <div className="text-government-primaryPale pt-4">© 2025 Government of India. All Rights Reserved.</div>
