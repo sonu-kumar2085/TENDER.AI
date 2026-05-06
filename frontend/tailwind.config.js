@@ -40,13 +40,37 @@ export default {
       },
       boxShadow: {
         card: '0 2px 8px rgba(46, 125, 50, 0.08)',
-        cardHover: '0 4px 16px rgba(46, 125, 50, 0.15)',
+        cardHover: '0 8px 24px rgba(46, 125, 50, 0.18)',
       },
       borderRadius: {
         card: '8px',
         btn: '6px',
         chip: '4px',
-      }
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        scaleIn: {
+          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        slideDown: {
+          '0%': { opacity: '0', transform: 'translateY(-8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        fadeIn: 'fadeIn 0.25s ease-out both',
+        slideUp: 'slideUp 0.3s ease-out both',
+        scaleIn: 'scaleIn 0.25s ease-out both',
+        slideDown: 'slideDown 0.2s ease-out both',
+      },
     },
   },
   plugins: [],

@@ -162,9 +162,9 @@ const TenderDetail = () => {
 
   const breadcrumbs = (
     <div className="flex items-center gap-2">
-      <Link to="/dashboard" className="hover:text-government-primary transition-colors">Home</Link>
+      <Link to="/dashboard" className="hover:text-government-primary transition-colors font-medium">Home</Link>
       <span>&gt;</span>
-      <span>{tender.type}</span>
+      <Link to="/dashboard" className="hover:text-government-primary transition-colors">{tender.type}</Link>
       <span>&gt;</span>
       <span className="text-government-primaryDark font-medium">{tender.name}</span>
     </div>
@@ -182,12 +182,9 @@ const TenderDetail = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-government-primaryDark leading-tight">
               {tender.name}
             </h1>
-            <span className="bg-government-eligibleBg text-government-eligibleGreen font-bold px-3 py-1 rounded-chip text-sm border border-government-border whitespace-nowrap self-start uppercase">
-              {tender.status}
-            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             <div>
               <p className="text-sm text-government-textMuted mb-1">Tender ID</p>
               <p className="font-mono text-government-monospace font-medium">{tender.tenderId}</p>
@@ -195,12 +192,6 @@ const TenderDetail = () => {
             <div>
               <p className="text-sm text-government-textMuted mb-1">Issuing Authority</p>
               <p className="font-medium text-government-textPrimary">{tender.issuingAuthority}</p>
-            </div>
-            <div>
-              <p className="text-sm text-government-textMuted mb-1">Deadline</p>
-              <p className="font-medium text-government-rejectedRed">
-                {new Date(tender.submissionDeadline).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-              </p>
             </div>
             <div>
               <p className="text-sm text-government-textMuted mb-1">Estimated Value</p>
@@ -249,7 +240,7 @@ const TenderDetail = () => {
 
           <div className="bg-government-surfaceHover border border-government-border rounded-t-card p-3 mb-4 text-sm text-government-textSecondary flex items-center gap-2">
             <AlertTriangle size={18} className="text-government-reviewAmber" />
-            AI has ranked all proposals by eligibility score. Manual review required for highlighted entries.
+            Proposals have been ranked by eligibility score. Manual review required for highlighted entries.
           </div>
 
           <div className="bg-white rounded-card shadow-card overflow-x-auto border border-government-border mb-6">
@@ -260,7 +251,7 @@ const TenderDetail = () => {
                   <th className="p-4 font-semibold">Company Name</th>
                   <th className="p-4 font-semibold">Bid Value</th>
                   <th className="p-4 font-semibold w-48">Confidence Score</th>
-                  <th className="p-4 font-semibold w-48">AI Result</th>
+                  <th className="p-4 font-semibold w-48">Evaluation Result</th>
                   <th className="p-4 font-semibold w-40 text-center">Action</th>
                 </tr>
               </thead>

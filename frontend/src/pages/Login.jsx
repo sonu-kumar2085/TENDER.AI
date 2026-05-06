@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, EyeOff, RefreshCw, Plus, Building2 } from 'lucide-react';
 import Modal from '../components/Modal';
-
 const Login = ({ onLogin }) => {
   const navigate = useNavigate();
   const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
   const [department, setDepartment] = useState('');
   const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [captchaError, setCaptchaError] = useState(false);
 
@@ -136,9 +136,7 @@ const Login = ({ onLogin }) => {
       {/* Left Panel */}
       <div className="hidden lg:flex w-[55%] bg-government-primaryDark flex-col justify-center px-16 relative">
         <div className="absolute top-8 left-8 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full border border-government-primaryPale flex items-center justify-center text-government-primaryPale text-xs font-bold">
-            GOI
-          </div>
+          <img src="/emblem.svg" alt="National Emblem" className="h-12 w-12 object-contain brightness-0 invert" />
           <span className="text-government-primaryPale text-sm tracking-widest font-semibold uppercase">Government of India</span>
         </div>
 
@@ -150,7 +148,7 @@ const Login = ({ onLogin }) => {
           <div className="space-y-6">
             <div className="flex items-center gap-4 text-white text-lg">
               <ShieldCheck className="text-government-primaryLight" size={28} />
-              <span>AI-Powered Document Analysis</span>
+              <span>Automated Document Analysis</span>
             </div>
             <div className="flex items-center gap-4 text-white text-lg">
               <ShieldCheck className="text-government-primaryLight" size={28} />
@@ -164,17 +162,15 @@ const Login = ({ onLogin }) => {
         </div>
 
         <div className="absolute bottom-8 left-8 text-government-textMuted text-xs">
-          Powered by Anthropic Claude
+          National Informatics Centre (NIC)
         </div>
       </div>
 
       {/* Right Panel */}
-      <div className="w-full lg:w-[45%] bg-government-surface flex flex-col justify-center px-8 sm:px-16 relative">
+      <div className="w-full lg:w-[45%] bg-government-surface flex flex-col justify-center px-8 sm:px-16 relative animate-slideUp">
         <div className="absolute top-8 right-8 flex items-center gap-2 lg:hidden">
-          <div className="w-8 h-8 rounded-full border border-government-primaryDark flex items-center justify-center text-government-primaryDark text-[10px] font-bold">
-            GOI
-          </div>
-          <span className="text-government-primaryDark font-bold text-lg tracking-wide">TENDER.AI</span>
+          <img src="/emblem.svg" alt="National Emblem" className="h-8 w-8 object-contain" />
+          <span className="text-government-primaryDark font-bold text-lg tracking-wide">TENDER</span>
         </div>
 
         <div className="max-w-md w-full mx-auto">
@@ -200,15 +196,19 @@ const Login = ({ onLogin }) => {
               <label className="block text-sm font-medium text-government-textPrimary mb-1">Password</label>
               <div className="relative">
                 <input 
-                  type="password" 
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 rounded-btn border border-government-border focus:outline-none focus:ring-2 focus:ring-government-primary"
                   placeholder="••••••••"
                 />
-                <button type="button" className="absolute right-3 top-3 text-government-textMuted">
-                  <EyeOff size={20} />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(prev => !prev)}
+                  className="absolute right-3 top-3 text-government-textMuted hover:text-government-primary transition-colors"
+                >
+                  {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                 </button>
               </div>
             </div>

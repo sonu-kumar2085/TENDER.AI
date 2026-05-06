@@ -175,7 +175,7 @@ const Dashboard = () => {
               {categoriesWithTenders.map((cat) => (
                 <div 
                   key={cat.id} 
-                  className="bg-white p-6 rounded-card shadow-card border border-government-primaryPale transition-all flex flex-col h-96"
+                  className="bg-white p-6 rounded-card shadow-card border border-government-primaryPale transition-all duration-300 flex flex-col h-96 hover:-translate-y-1.5 hover:shadow-cardHover cursor-default"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 rounded-full bg-government-eligibleBg flex items-center justify-center text-2xl">
@@ -191,17 +191,38 @@ const Dashboard = () => {
                   <div className="flex-grow overflow-y-auto pr-2 space-y-3">
                     {cat.assignedTenders.length > 0 ? (
                       <ul className="space-y-3 mt-2">
-                        {cat.assignedTenders.map(t => (
+                        {cat.assignedTenders.map((t, idx) => (
                           <li 
                             key={t._id} 
                             onClick={() => navigate(`/tender/${t.tenderId}`)}
-                            className="bg-gray-50 hover:bg-government-surfaceHover p-3 rounded border border-gray-200 cursor-pointer transition-colors"
+                            className="bg-gray-50 hover:bg-government-surfaceHover p-3 rounded border border-gray-200 cursor-pointer transition-colors animate-slideUp group"
+                            style={{ animationDelay: `${idx * 60}ms` }}
                           >
-                            <div className="text-sm font-semibold text-government-textPrimary line-clamp-2">
-                              {t.name.replace(/\[OPEN\]\s*/i, '')}
-                            </div>
-                            <div className="text-xs text-government-textMuted mt-1">
-                              ID: {t.tenderId}
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-grow min-w-0">
+                                <div className="text-sm font-semibold text-government-textPrimary line-clamp-2">
+                                  {t.name.replace(/\[OPEN\]\s*/i, '')}
+                                </div>
+                                <div className="text-xs text-government-textMuted mt-1">
+                                  ID: {t.tenderId}
+                                </div>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Delete "${t.name.replace(/\[OPEN\]\s*/i, '')}"? This cannot be undone.`)) {
+                                    const token = localStorage.getItem('token');
+                                    fetch(`http://localhost:5000/api/tenders/${t.tenderId}`, {
+                                      method: 'DELETE',
+                                      headers: { 'Authorization': `Bearer ${token}` }
+                                    }).then(() => setTenders(prev => prev.filter(x => x._id !== t._id)));
+                                  }
+                                }}
+                                className="opacity-0 group-hover:opacity-100 flex-shrink-0 text-red-400 hover:text-red-600 hover:bg-red-50 p-1 rounded transition-all"
+                                title="Delete Tender"
+                              >
+                                🗑
+                              </button>
                             </div>
                           </li>
                         ))}

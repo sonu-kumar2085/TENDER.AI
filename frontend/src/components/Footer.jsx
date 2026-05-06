@@ -33,8 +33,8 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
           <div className="space-y-2">
             <div className="text-white font-bold text-lg flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full border border-white flex items-center justify-center text-[8px]">GOI</div>
-              TENDER.AI
+              <img src="/emblem.svg" alt="National Emblem" className="h-7 w-7 object-contain brightness-0 invert" />
+              TENDER
             </div>
             <div className="text-government-primaryPale">Government Procurement Intelligence System</div>
             <div className="text-government-primaryPale pt-4">© 2025 Government of India. All Rights Reserved.</div>
@@ -125,7 +125,7 @@ const Footer = () => {
             <Shield size={20} className="text-government-primary mt-0.5 flex-shrink-0" />
             <div>
               <h3 className="font-bold text-government-primaryDark mb-1">AI Analysis & Decision</h3>
-              <p>After proposal submission, the AI engine automatically extracts and evaluates criteria. Results are ranked by confidence score. Officers can review flagged items and submit a final decision (Approve / Reject / Clarification). All decisions are permanently recorded in the audit trail.</p>
+              <p>After proposal submission, the system automatically extracts and evaluates criteria. Results are ranked by confidence score. Officers can review flagged items and submit a final decision (Approve / Reject / Clarification). All decisions are permanently recorded in the audit trail.</p>
             </div>
           </div>
 

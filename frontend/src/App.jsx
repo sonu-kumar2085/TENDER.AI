@@ -16,15 +16,15 @@ function App() {
         
         <Route 
           path="/dashboard" 
-          element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} 
+          element={isAuthenticated ? <div key="dashboard" className="animate-fadeIn"><Dashboard /></div> : <Navigate to="/login" />} 
         />
         <Route 
           path="/tender/:tenderId" 
-          element={isAuthenticated ? <TenderDetail /> : <Navigate to="/login" />} 
+          element={isAuthenticated ? <div key="tender" className="animate-fadeIn"><TenderDetail /></div> : <Navigate to="/login" />} 
         />
         <Route 
           path="/tender/:tenderId/proposal/:proposalId" 
-          element={isAuthenticated ? <ProposalAnalysis /> : <Navigate to="/login" />} 
+          element={isAuthenticated ? <div key="proposal" className="animate-fadeIn"><ProposalAnalysis /></div> : <Navigate to="/login" />} 
         />
         <Route 
           path="/officers" 
