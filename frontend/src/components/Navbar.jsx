@@ -1,10 +1,17 @@
-import React from 'react';
-import { ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, LogOut } from 'lucide-react';
 
 const Navbar = ({ breadcrumbs }) => {
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const officerStr = localStorage.getItem('officer');
   const officer = officerStr ? JSON.parse(officerStr) : { name: 'Officer', department: 'Department' };
   const initials = officer.name ? officer.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'OF';
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('officer');
+    window.location.href = '/login';
+  };
 
   return (
     <nav className="bg-government-navbarBg border-b border-government-navbarBorder w-full sticky top-0 z-50 flex flex-col">
@@ -20,7 +27,10 @@ const Navbar = ({ breadcrumbs }) => {
           Procurement Portal
         </div>
 
-        <div className="flex items-center gap-3 cursor-pointer hover:bg-government-surfaceHover p-1.5 rounded-lg transition-colors">
+        <div 
+          className="flex items-center gap-3 cursor-pointer hover:bg-government-surfaceHover p-1.5 rounded-lg transition-colors relative"
+          onClick={() => setShowProfileMenu(!showProfileMenu)}
+        >
           <div className="w-10 h-10 rounded-full bg-government-primary text-white flex items-center justify-center font-bold">
             {initials}
           </div>
@@ -29,6 +39,18 @@ const Navbar = ({ breadcrumbs }) => {
             <span className="text-xs text-government-textMuted">{officer.department}</span>
           </div>
           <ChevronDown size={16} className="text-government-textMuted ml-1" />
+          
+          {showProfileMenu && (
+            <div className="absolute top-14 right-0 bg-white shadow-lg border border-government-border rounded-btn py-2 w-48 z-50">
+              <div 
+                className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer transition-colors"
+                onClick={handleLogout}
+              >
+                <LogOut size={16} />
+                Sign Out
+              </div>
+            </div>
+          )}
         </div>
       </div>
       

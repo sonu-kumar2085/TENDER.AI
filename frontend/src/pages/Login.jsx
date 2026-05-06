@@ -8,10 +8,35 @@ const Login = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [department, setDepartment] = useState('CRPF');
   const [error, setError] = useState(null);
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaError, setCaptchaError] = useState(false);
+
+  const generateCaptcha = () => {
+    const a = Math.floor(Math.random() * 10) + 1;
+    const b = Math.floor(Math.random() * 10) + 1;
+    return { a, b, answer: a + b };
+  };
+
+  const [captcha, setCaptcha] = useState(() => generateCaptcha());
+
+  const refreshCaptcha = (clearError = true) => {
+    setCaptcha(generateCaptcha());
+    setCaptchaAnswer('');
+    if (clearError) setCaptchaError(false);
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
+    setCaptchaError(false);
+
+    if (parseInt(captchaAnswer) !== captcha.answer) {
+      setCaptchaError(true);
+      setCaptcha(generateCaptcha()); // generate new question but keep error visible
+      setCaptchaAnswer('');
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
@@ -131,18 +156,24 @@ const Login = ({ onLogin }) => {
               </select>
             </div>
 
-            <div className="bg-government-surfaceHover p-4 rounded-btn border border-government-border flex items-center justify-between">
-              <span className="text-government-textPrimary font-medium">Solve: 7 + 3 = ___</span>
+            <div className={`bg-government-surfaceHover p-4 rounded-btn border flex items-center justify-between ${captchaError ? 'border-red-400 bg-red-50' : 'border-government-border'}`}>
+              <span className="text-government-textPrimary font-medium">Solve: {captcha.a} + {captcha.b} = ___</span>
               <div className="flex gap-2">
                 <input 
-                  type="text" 
-                  className="w-16 px-2 py-1 text-center rounded border border-government-border focus:outline-none focus:ring-1 focus:ring-government-primary"
+                  type="text"
+                  value={captchaAnswer}
+                  onChange={(e) => { setCaptchaAnswer(e.target.value); setCaptchaError(false); }}
+                  className={`w-16 px-2 py-1 text-center rounded border focus:outline-none focus:ring-1 focus:ring-government-primary ${captchaError ? 'border-red-400 text-red-600' : 'border-government-border'}`}
+                  placeholder="?"
                 />
-                <button type="button" className="p-1 text-government-textMuted hover:text-government-primary">
+                <button type="button" onClick={refreshCaptcha} className="p-1 text-government-textMuted hover:text-government-primary">
                   <RefreshCw size={18} />
                 </button>
               </div>
             </div>
+            {captchaError && (
+              <p className="text-red-600 text-xs mt-1">Incorrect answer. A new question has been generated.</p>
+            )}
 
             <button 
               type="submit"

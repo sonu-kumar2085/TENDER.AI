@@ -158,9 +158,9 @@ const Dashboard = () => {
             <div>
               <label className="block text-sm font-medium text-government-textPrimary mb-1">Tender Type *</label>
               <select className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary bg-white text-sm">
-                <option>Medical & Healthcare</option>
-                <option>Technology & IT</option>
-                <option>Construction</option>
+                {baseCategories.map((cat) => (
+                  <option key={cat.id} value={cat.title}>{cat.title}</option>
+                ))}
               </select>
             </div>
           </div>

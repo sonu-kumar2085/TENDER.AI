@@ -1,28 +1,84 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
-import { tenders, proposals } from '../data/mockData';
-import { Download, Trophy, AlertTriangle, CheckCircle2, XCircle, UploadCloud } from 'lucide-react';
+import { Download, Trophy, AlertTriangle, CheckCircle2, XCircle, UploadCloud, RefreshCw } from 'lucide-react';
 
 const TenderDetail = () => {
   const { tenderId } = useParams();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tender, setTender] = useState(null);
+  const [proposals, setProposals] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const tender = tenders.find(t => t.id === tenderId) || tenders[0];
-  const tenderProposals = proposals.filter(p => p.tenderId === tender.id);
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [tenderRes, proposalsRes] = await Promise.all([
+          fetch(`http://localhost:5000/api/tenders/${tenderId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`http://localhost:5000/api/tenders/${tenderId}/proposals`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        ]);
+
+        const tenderData = await tenderRes.json();
+        const proposalsData = await proposalsRes.json();
+
+        if (tenderData.success) setTender(tenderData.data);
+        if (proposalsData.success) setProposals(proposalsData.data);
+      } catch (err) {
+        console.error('Failed to fetch data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [tenderId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-government-bg">
+        <Navbar />
+        <div className="flex-grow flex items-center justify-center">
+          <RefreshCw className="animate-spin text-government-primary" size={36} />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!tender) {
+    return (
+      <div className="min-h-screen flex flex-col bg-government-bg">
+        <Navbar />
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-government-textMuted text-lg">Tender not found.</p>
+            <Link to="/dashboard" className="text-government-primary mt-4 inline-block hover:underline">← Back to Dashboard</Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   const breadcrumbs = (
     <div className="flex items-center gap-2">
       <Link to="/dashboard" className="hover:text-government-primary transition-colors">Home</Link>
       <span>&gt;</span>
-      <span>{tender.category}</span>
+      <span>{tender.type}</span>
       <span>&gt;</span>
-      <span className="text-government-primaryDark font-medium">{tender.title}</span>
+      <span className="text-government-primaryDark font-medium">{tender.name}</span>
     </div>
   );
+
+  const sortedProposals = [...proposals].sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
 
   return (
     <div className="min-h-screen flex flex-col bg-government-bg">
@@ -32,29 +88,31 @@ const TenderDetail = () => {
         <div className="bg-white rounded-card shadow-card border border-government-border border-l-4 border-l-government-primary p-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
             <h1 className="text-2xl sm:text-3xl font-bold text-government-primaryDark leading-tight">
-              {tender.title}
+              {tender.name}
             </h1>
-            <span className="bg-government-eligibleBg text-government-eligibleGreen font-bold px-3 py-1 rounded-chip text-sm border border-government-border whitespace-nowrap self-start">
-              [{tender.status}]
+            <span className="bg-government-eligibleBg text-government-eligibleGreen font-bold px-3 py-1 rounded-chip text-sm border border-government-border whitespace-nowrap self-start uppercase">
+              {tender.status}
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div>
               <p className="text-sm text-government-textMuted mb-1">Tender ID</p>
-              <p className="font-mono text-government-monospace font-medium">{tender.id}</p>
+              <p className="font-mono text-government-monospace font-medium">{tender.tenderId}</p>
             </div>
             <div>
               <p className="text-sm text-government-textMuted mb-1">Issuing Authority</p>
-              <p className="font-medium text-government-textPrimary">{tender.authority}</p>
+              <p className="font-medium text-government-textPrimary">{tender.issuingAuthority}</p>
             </div>
             <div>
               <p className="text-sm text-government-textMuted mb-1">Deadline</p>
-              <p className="font-medium text-government-rejectedRed">{tender.deadline}</p>
+              <p className="font-medium text-government-rejectedRed">
+                {new Date(tender.submissionDeadline).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </p>
             </div>
             <div>
               <p className="text-sm text-government-textMuted mb-1">Estimated Value</p>
-              <p className="font-medium text-government-textPrimary">₹ {tender.value.toLocaleString('en-IN')}</p>
+              <p className="font-medium text-government-textPrimary">₹ {tender.estimatedValue?.toLocaleString('en-IN')}</p>
             </div>
           </div>
 
@@ -80,7 +138,7 @@ const TenderDetail = () => {
           <div className="flex items-center gap-4 mb-4 border-l-4 border-government-primary pl-4">
             <h2 className="text-2xl font-semibold text-government-primaryDark">Submitted Proposals</h2>
             <span className="bg-government-primaryPale text-government-primaryDark px-3 py-1 rounded-chip text-sm font-bold">
-              {tenderProposals.length} Proposals
+              {proposals.length} Proposals
             </span>
           </div>
 
@@ -102,71 +160,75 @@ const TenderDetail = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-government-border">
-                {tenderProposals.sort((a,b) => a.rank - b.rank).map((prop) => {
-                  
+                {sortedProposals.map((prop) => {
+                  const analysis = prop.analysisResult;
+                  const result = analysis?.overallResult || 'manual_review';
+                  const confidence = analysis?.confidenceScore ?? 0;
+                  const hasFraud = analysis?.fraudFlags?.length > 0;
+
                   let rowStyle = "hover:bg-gray-50 transition-colors bg-white";
                   let aiBadge = null;
-                  
-                  if (prop.result === 'ELIGIBLE') {
+
+                  if (result === 'eligible') {
                     aiBadge = (
                       <span className="inline-flex items-center gap-1.5 bg-government-eligibleBg text-government-eligibleGreen px-2.5 py-1 rounded-chip text-xs font-bold border border-green-200">
                         <CheckCircle2 size={14} /> ELIGIBLE
                       </span>
                     );
-                  } else if (prop.result === 'REJECTED') {
+                  } else if (result === 'rejected') {
                     rowStyle = "hover:bg-government-rejectedBg transition-colors bg-white";
                     aiBadge = (
-                      <span className="inline-flex items-center gap-1.5 bg-government-rejectedBg text-government-rejectedRed px-2.5 py-1 rounded-chip text-xs font-bold border border-red-200 cursor-help" title="Fails minimum criteria">
+                      <span className="inline-flex items-center gap-1.5 bg-government-rejectedBg text-government-rejectedRed px-2.5 py-1 rounded-chip text-xs font-bold border border-red-200">
                         <XCircle size={14} /> REJECTED
                       </span>
                     );
-                  } else if (prop.result === 'MANUAL REVIEW') {
+                  } else {
                     rowStyle = "hover:bg-[#FFFBF0] transition-colors bg-white border-l-4 border-l-government-reviewAmber";
                     aiBadge = (
-                      <span className="inline-flex items-center gap-1.5 bg-government-reviewBg text-government-reviewAmber px-2.5 py-1 rounded-chip text-xs font-bold border border-orange-200 cursor-help" title="Low OCR confidence on some pages">
+                      <span className="inline-flex items-center gap-1.5 bg-government-reviewBg text-government-reviewAmber px-2.5 py-1 rounded-chip text-xs font-bold border border-orange-200">
                         <AlertTriangle size={14} /> MANUAL REVIEW
                       </span>
                     );
                   }
 
-                  if (prop.fraudRisk) {
+                  if (hasFraud) {
                     rowStyle += " !border-l-4 !border-l-government-rejectedRed";
                   }
 
-                  const confColor = prop.confidence >= 0.8 ? 'bg-government-eligibleGreen' : prop.confidence >= 0.5 ? 'bg-government-reviewAmber' : 'bg-government-rejectedRed';
+                  const confColor = confidence >= 0.8 ? 'bg-government-eligibleGreen' : confidence >= 0.5 ? 'bg-government-reviewAmber' : 'bg-government-rejectedRed';
 
                   return (
-                    <tr key={prop.id} className={rowStyle}>
+                    <tr key={prop._id} className={rowStyle}>
                       <td className="p-4 text-center">
                         {prop.rank === 1 ? <Trophy className="text-yellow-500 mx-auto" size={24} /> :
                          prop.rank === 2 ? <Trophy className="text-gray-400 mx-auto" size={24} /> :
                          prop.rank === 3 ? <Trophy className="text-amber-600 mx-auto" size={24} /> :
-                         <span className="text-government-textMuted font-bold text-lg">#{prop.rank}</span>}
+                         <span className="text-government-textMuted font-bold text-lg">#{prop.rank ?? '—'}</span>}
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-government-textPrimary">{prop.companyName}</span>
-                          {prop.fraudRisk && (
+                          {hasFraud && (
                             <span className="bg-government-rejectedRed text-white text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">⚠ Fraud Risk</span>
                           )}
                         </div>
-                        <div className="font-mono text-xs text-government-textMuted mt-1">{prop.regNo}</div>
+                        <div className="font-mono text-xs text-government-textMuted mt-1">{prop.companyRegistrationNo}</div>
                       </td>
-                      <td className="p-4 font-medium">₹ {prop.bidValue.toLocaleString('en-IN')}</td>
+                      <td className="p-4 font-medium">₹ {prop.bidValue?.toLocaleString('en-IN')}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <div className="flex-grow bg-gray-200 rounded-full h-2">
-                            <div className={`h-2 rounded-full ${confColor}`} style={{ width: `${prop.confidence * 100}%` }}></div>
+                            <div className={`h-2 rounded-full ${confColor}`} style={{ width: `${confidence * 100}%` }}></div>
                           </div>
                           <span className="text-sm font-mono text-government-textPrimary w-10 text-right">
-                            {Math.round(prop.confidence * 100)}%
+                            {Math.round(confidence * 100)}%
                           </span>
                         </div>
                       </td>
                       <td className="p-4">{aiBadge}</td>
                       <td className="p-4 text-center">
                         <button 
-                          onClick={() => navigate(`/tender/${tender.id}/proposal/${prop.id}`)}
+                          onClick={() => navigate(`/tender/${tenderId}/proposal/${prop.proposalId}`)}
                           className="text-government-primary hover:text-government-primaryDark hover:bg-government-primaryPale px-3 py-1.5 rounded-btn font-medium text-sm transition-colors"
                         >
                           Detail Analysis →
@@ -175,17 +237,13 @@ const TenderDetail = () => {
                     </tr>
                   );
                 })}
+                {sortedProposals.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-government-textMuted italic">No proposals submitted yet.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
-          </div>
-          
-          <div className="flex justify-center mt-4">
-             <div className="flex items-center gap-2">
-               <button className="px-3 py-1 rounded border border-government-border text-government-textMuted hover:bg-government-surfaceHover">Prev</button>
-               <button className="px-3 py-1 rounded bg-government-primary text-white">1</button>
-               <button className="px-3 py-1 rounded border border-government-border text-government-textMuted hover:bg-government-surfaceHover">2</button>
-               <button className="px-3 py-1 rounded border border-government-border text-government-textMuted hover:bg-government-surfaceHover">Next</button>
-             </div>
           </div>
         </div>
       </main>
