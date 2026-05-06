@@ -24,29 +24,85 @@ const seedDB = async () => {
     const adminPassword = await bcrypt.hash('Admin@1234', salt);
     const officerPassword = await bcrypt.hash('Officer@1234', salt);
 
-    const admin = await User.create({
-      employeeId: 'ADMIN-0001',
-      name: 'Admin User',
-      department: 'CRPF',
-      role: 'admin',
-      passwordHash: adminPassword
-    });
+    // Department definitions: { key, name, adminId, officers: [{ id, name }] }
+    const departments = [
+      {
+        name: 'CRPF',
+        adminId: 'ADMIN-CRPF-0001',
+        adminName: 'CRPF Admin',
+        officers: [
+          { id: 'CRPF-2024-0042', name: 'Rajesh Kumar' },
+          { id: 'CRPF-2024-0055', name: 'Priya Sharma' }
+        ]
+      },
+      {
+        name: 'Ministry of Defence',
+        adminId: 'ADMIN-MOD-0001',
+        adminName: 'MoD Admin',
+        officers: [
+          { id: 'MOD-2024-0011', name: 'Vikram Singh' },
+          { id: 'MOD-2024-0022', name: 'Anita Desai' }
+        ]
+      },
+      {
+        name: 'Ministry of Health',
+        adminId: 'ADMIN-MOH-0001',
+        adminName: 'MoH Admin',
+        officers: [
+          { id: 'MOH-2024-0031', name: 'Dr. Suresh Patel' },
+          { id: 'MOH-2024-0032', name: 'Neha Gupta' }
+        ]
+      },
+      {
+        name: 'CPWD',
+        adminId: 'ADMIN-CPWD-0001',
+        adminName: 'CPWD Admin',
+        officers: [
+          { id: 'CPWD-2024-0041', name: 'Ramesh Yadav' },
+          { id: 'CPWD-2024-0042', name: 'Sunita Verma' }
+        ]
+      },
+      {
+        name: 'Railways',
+        adminId: 'ADMIN-RAIL-0001',
+        adminName: 'Railways Admin',
+        officers: [
+          { id: 'RAIL-2024-0051', name: 'Amit Joshi' },
+          { id: 'RAIL-2024-0052', name: 'Kavita Reddy' }
+        ]
+      }
+    ];
 
-    const officer1 = await User.create({
-      employeeId: 'CRPF-2024-0042',
-      name: 'Rajesh Kumar',
-      department: 'CRPF',
-      role: 'procurement_officer',
-      passwordHash: officerPassword
-    });
+    const allUsers = {};
 
-    const officer2 = await User.create({
-      employeeId: 'CRPF-2024-0055',
-      name: 'Priya Sharma',
-      department: 'CRPF',
-      role: 'procurement_officer',
-      passwordHash: officerPassword
-    });
+    for (const dept of departments) {
+      // Create admin
+      const admin = await User.create({
+        employeeId: dept.adminId,
+        name: dept.adminName,
+        department: dept.name,
+        role: 'admin',
+        passwordHash: adminPassword
+      });
+      allUsers[dept.adminId] = admin;
+      console.log(`  Created admin: ${dept.adminId} (${dept.name})`);
+
+      // Create officers
+      for (const off of dept.officers) {
+        const officer = await User.create({
+          employeeId: off.id,
+          name: off.name,
+          department: dept.name,
+          role: 'procurement_officer',
+          passwordHash: officerPassword
+        });
+        allUsers[off.id] = officer;
+        console.log(`  Created officer: ${off.id} (${dept.name})`);
+      }
+    }
+
+    // Use the first CRPF officer as the tender creator for seeded tenders
+    const officer1 = allUsers['CRPF-2024-0042'];
 
     console.log('Creating tenders...');
     const tenderTypes = ['Medical & Healthcare', 'Food & Catering', 'Construction & Infrastructure', 'Technology & IT', 'Technical & Engineering', 'Finance & Consulting'];

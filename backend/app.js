@@ -6,6 +6,7 @@ const authRoutes = require('./routes/authRoutes');
 const tenderRoutes = require('./routes/tenderRoutes');
 const proposalRoutes = require('./routes/proposalRoutes');
 const analysisRoutes = require('./routes/analysisRoutes');
+const officerRoutes = require('./routes/officerRoutes');
 
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -21,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tenders', tenderRoutes);
 app.use('/api/proposals', proposalRoutes);
 app.use('/api/analysis', analysisRoutes);
+app.use('/api/officers', officerRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

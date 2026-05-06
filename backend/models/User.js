@@ -6,8 +6,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   department: { 
     type: String, 
-    required: true,
-    enum: ['CRPF', 'Ministry of Defence', 'Ministry of Health', 'CPWD', 'Railways', 'Other']
+    required: true
   },
   role: { 
     type: String, 
