@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pydantic
+pdfplumber
+PyMuPDF
+pytesseract
+opencv-python-headless
+spacy
+groq
+numpy
+scipy
+networkx
+reportlab
+python-multipart
+python-dotenv
