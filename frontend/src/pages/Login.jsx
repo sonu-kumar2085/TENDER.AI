@@ -1,14 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, EyeOff, RefreshCw } from 'lucide-react';
 
 const Login = ({ onLogin }) => {
   const navigate = useNavigate();
+  const [employeeId, setEmployeeId] = useState('');
+  const [password, setPassword] = useState('');
+  const [department, setDepartment] = useState('CRPF');
+  const [error, setError] = useState(null);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    onLogin();
-    navigate('/dashboard');
+    setError(null);
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employeeId, password, department })
+      });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Login failed');
+      }
+      
+      localStorage.setItem('token', data.data.token);
+      localStorage.setItem('officer', JSON.stringify(data.data.officer));
+      onLogin();
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -61,12 +83,16 @@ const Login = ({ onLogin }) => {
           <h2 className="text-3xl font-semibold text-government-textPrimary mb-2">Officer Sign In</h2>
           <p className="text-government-textMuted mb-8 text-sm">Access restricted to authorized procurement personnel only</p>
 
+          {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-btn text-sm font-medium border border-red-200">{error}</div>}
+
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-government-textPrimary mb-1">Employee ID</label>
+              <label className="block text-sm font-medium text-government-textPrimary mb-1">ID</label>
               <input 
                 type="text" 
                 required
+                value={employeeId}
+                onChange={(e) => setEmployeeId(e.target.value)}
                 className="w-full px-4 py-3 rounded-btn border border-government-border focus:outline-none focus:ring-2 focus:ring-government-primary font-mono"
                 placeholder="e.g. CRPF-2024-0042"
               />
@@ -78,6 +104,8 @@ const Login = ({ onLogin }) => {
                 <input 
                   type="password" 
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 rounded-btn border border-government-border focus:outline-none focus:ring-2 focus:ring-government-primary"
                   placeholder="••••••••"
                 />
@@ -89,7 +117,11 @@ const Login = ({ onLogin }) => {
 
             <div>
               <label className="block text-sm font-medium text-government-textPrimary mb-1">Department</label>
-              <select className="w-full px-4 py-3 rounded-btn border border-government-border focus:outline-none focus:ring-2 focus:ring-government-primary bg-white">
+              <select 
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="w-full px-4 py-3 rounded-btn border border-government-border focus:outline-none focus:ring-2 focus:ring-government-primary bg-white"
+              >
                 <option>CRPF</option>
                 <option>Ministry of Defence</option>
                 <option>Ministry of Health</option>

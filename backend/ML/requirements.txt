@@ -13,3 +13,4 @@ networkx
 reportlab
 python-multipart
 python-dotenv
+httpx

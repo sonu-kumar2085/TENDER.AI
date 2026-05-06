@@ -1,8 +1,11 @@
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
-import { officer } from '../data/mockData';
 
 const Navbar = ({ breadcrumbs }) => {
+  const officerStr = localStorage.getItem('officer');
+  const officer = officerStr ? JSON.parse(officerStr) : { name: 'Officer', department: 'Department' };
+  const initials = officer.name ? officer.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'OF';
+
   return (
     <nav className="bg-government-navbarBg border-b border-government-navbarBorder w-full sticky top-0 z-50 flex flex-col">
       <div className="h-16 flex items-center justify-between px-6">
@@ -19,7 +22,7 @@ const Navbar = ({ breadcrumbs }) => {
 
         <div className="flex items-center gap-3 cursor-pointer hover:bg-government-surfaceHover p-1.5 rounded-lg transition-colors">
           <div className="w-10 h-10 rounded-full bg-government-primary text-white flex items-center justify-center font-bold">
-            {officer.initials}
+            {initials}
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-semibold text-government-textPrimary">{officer.name}</span>

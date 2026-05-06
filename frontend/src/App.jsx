@@ -6,7 +6,7 @@ import TenderDetail from './pages/TenderDetail';
 import ProposalAnalysis from './pages/ProposalAnalysis';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(!!localStorage.getItem('token'));
 
   return (
     <BrowserRouter>

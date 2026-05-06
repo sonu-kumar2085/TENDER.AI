@@ -1,0 +1,15 @@
+{
+  "name": "tender-ai-root",
+  "version": "1.0.0",
+  "description": "Root package for running TENDER.AI full stack",
+  "scripts": {
+    "start": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:ml\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:ml": "cd backend/ML && uvicorn main:app --reload --port 8000",
+    "install:all": "npm install concurrently && cd frontend && npm install && cd ../backend && npm install && cd ML && pip install -r requirements.txt"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -16,8 +16,7 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"message": "TENDER.AI Backend is running."}
+    return {"message": "TENDER.AI ML Backend is running."}
 
-from backend.api.routes import router
+from api.routes import router
 app.include_router(router)
-
