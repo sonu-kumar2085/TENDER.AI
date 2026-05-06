@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
-import { UploadCloud, RefreshCw } from 'lucide-react';
+import { UploadCloud, RefreshCw, FileText, X } from 'lucide-react';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -11,28 +11,39 @@ const Dashboard = () => {
   const [tenders, setTenders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Tender form state
+  const [tenderName, setTenderName] = useState('');
+  const [tenderType, setTenderType] = useState('Medical & Healthcare');
+  const [issuingAuthority, setIssuingAuthority] = useState('');
+  const [submissionDeadline, setSubmissionDeadline] = useState('');
+  const [estimatedValue, setEstimatedValue] = useState('');
+  const [description, setDescription] = useState('');
+  const [tenderPdf, setTenderPdf] = useState(null);
+  const [formError, setFormError] = useState(null);
+  const [formLoading, setFormLoading] = useState(false);
+  const fileInputRef = useRef(null);
+
   const officerStr = localStorage.getItem('officer');
   const officer = officerStr ? JSON.parse(officerStr) : { name: 'Officer', department: 'Department', lastLogin: 'Unknown' };
+  const token = localStorage.getItem('token');
+
+  const fetchTenders = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/tenders', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTenders(data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch tenders:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTenders = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:5000/api/tenders', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await res.json();
-        if (data.success) {
-          setTenders(data.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch tenders:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchTenders();
   }, []);
 
@@ -49,6 +60,75 @@ const Dashboard = () => {
     const catTenders = tenders.filter(t => t.type === cat.title);
     return { ...cat, count: catTenders.length, assignedTenders: catTenders };
   });
+
+  const resetForm = () => {
+    setTenderName('');
+    setTenderType('Medical & Healthcare');
+    setIssuingAuthority('');
+    setSubmissionDeadline('');
+    setEstimatedValue('');
+    setDescription('');
+    setTenderPdf(null);
+    setFormError(null);
+    setFormLoading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleCreateTender = async (e) => {
+    e.preventDefault();
+    setFormError(null);
+
+    if (!tenderPdf) {
+      setFormError('Please upload a tender PDF document');
+      return;
+    }
+
+    setFormLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('name', tenderName);
+      formData.append('type', tenderType);
+      formData.append('issuingAuthority', issuingAuthority);
+      formData.append('submissionDeadline', submissionDeadline);
+      formData.append('estimatedValue', estimatedValue);
+      formData.append('description', description);
+      formData.append('tenderPdf', tenderPdf);
+
+      const res = await fetch('http://localhost:5000/api/tenders', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error?.message || 'Failed to create tender');
+      }
+
+      resetForm();
+      setIsModalOpen(false);
+      setLoading(true);
+      fetchTenders();
+    } catch (err) {
+      setFormError(err.message);
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        setFormError('Only PDF files are allowed');
+        return;
+      }
+      setTenderPdf(file);
+      setFormError(null);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-government-bg">
@@ -79,7 +159,7 @@ const Dashboard = () => {
               <p className="text-government-textSecondary mt-1">Select a tender from the category list below</p>
             </div>
             <button 
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => { resetForm(); setIsModalOpen(true); }}
               className="bg-white border-2 border-government-primary text-government-primary hover:bg-government-primary hover:text-white transition-colors px-5 py-2.5 rounded-btn font-semibold shadow-sm whitespace-nowrap"
             >
               + Add New Tender
@@ -141,23 +221,37 @@ const Dashboard = () => {
 
       {/* Add Tender Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Tender">
-        <form className="space-y-4">
+        <form onSubmit={handleCreateTender} className="space-y-4">
+          {formError && (
+            <div className="p-3 bg-red-100 text-red-700 rounded-btn text-sm font-medium border border-red-200">{formError}</div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-government-textPrimary mb-1">Tender Name *</label>
-            <input type="text" className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary" placeholder="e.g. Supply of Medical Equipment 2025" />
+            <input
+              type="text"
+              required
+              value={tenderName}
+              onChange={(e) => setTenderName(e.target.value)}
+              className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary"
+              placeholder="e.g. Supply of Medical Equipment 2025"
+            />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-government-textPrimary mb-1">Tender ID *</label>
+              <label className="block text-sm font-medium text-government-textPrimary mb-1">Tender ID</label>
               <div className="relative">
-                <input type="text" readOnly value="AUTO: TND-2025-0089" className="w-full px-3 py-2 border border-government-border rounded-btn bg-gray-50 font-mono text-sm text-government-textMuted" />
-                <button type="button" className="absolute right-2 top-2 text-government-primary"><RefreshCw size={16} /></button>
+                <input type="text" readOnly value="AUTO-GENERATED" className="w-full px-3 py-2 border border-government-border rounded-btn bg-gray-50 font-mono text-sm text-government-textMuted" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-government-textPrimary mb-1">Tender Type *</label>
-              <select className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary bg-white text-sm">
+              <select
+                value={tenderType}
+                onChange={(e) => setTenderType(e.target.value)}
+                className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary bg-white text-sm"
+              >
                 {baseCategories.map((cat) => (
                   <option key={cat.id} value={cat.title}>{cat.title}</option>
                 ))}
@@ -168,11 +262,24 @@ const Dashboard = () => {
           <div className="grid grid-cols-2 gap-4">
              <div>
               <label className="block text-sm font-medium text-government-textPrimary mb-1">Issuing Authority *</label>
-              <input type="text" className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary text-sm" placeholder="e.g. CRPF Procurement Wing" />
+              <input
+                type="text"
+                required
+                value={issuingAuthority}
+                onChange={(e) => setIssuingAuthority(e.target.value)}
+                className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary text-sm"
+                placeholder="e.g. CRPF Procurement Wing"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-government-textPrimary mb-1">Submission Deadline *</label>
-              <input type="datetime-local" className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary text-sm" />
+              <input
+                type="datetime-local"
+                required
+                value={submissionDeadline}
+                onChange={(e) => setSubmissionDeadline(e.target.value)}
+                className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary text-sm"
+              />
             </div>
           </div>
 
@@ -180,26 +287,74 @@ const Dashboard = () => {
             <label className="block text-sm font-medium text-government-textPrimary mb-1">Estimated Value (INR) *</label>
             <div className="relative">
               <span className="absolute left-3 top-2 text-government-textMuted">₹</span>
-              <input type="number" className="w-full pl-8 pr-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary" placeholder="e.g. 5000000" />
+              <input
+                type="number"
+                required
+                value={estimatedValue}
+                onChange={(e) => setEstimatedValue(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary"
+                placeholder="e.g. 5000000"
+              />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-government-textPrimary mb-1">Description</label>
-            <textarea rows="3" className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary text-sm" placeholder="Brief description of procurement requirement..."></textarea>
+            <textarea
+              rows="3"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary text-sm"
+              placeholder="Brief description of procurement requirement..."
+            ></textarea>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-government-textPrimary mb-1">Upload Tender Document (PDF) *</label>
-            <div className="border-2 border-dashed border-government-primaryLight rounded-btn p-6 flex flex-col items-center justify-center bg-government-surfaceHover cursor-pointer hover:bg-government-primaryPale transition-colors">
-              <UploadCloud size={32} className="text-government-primary mb-2" />
-              <p className="text-sm text-government-textPrimary font-medium">Drag & drop tender PDF or click to upload</p>
-            </div>
+            <input
+              type="file"
+              accept="application/pdf"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            {!tenderPdf ? (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-government-primaryLight rounded-btn p-6 flex flex-col items-center justify-center bg-government-surfaceHover cursor-pointer hover:bg-government-primaryPale transition-colors"
+              >
+                <UploadCloud size={32} className="text-government-primary mb-2" />
+                <p className="text-sm text-government-textPrimary font-medium">Click to upload tender PDF</p>
+                <p className="text-xs text-government-textMuted mt-1">Max 10MB • PDF only</p>
+              </div>
+            ) : (
+              <div className="border border-government-border rounded-btn p-3 flex items-center justify-between bg-government-eligibleBg">
+                <div className="flex items-center gap-2">
+                  <FileText size={20} className="text-government-primary" />
+                  <span className="text-sm font-medium text-government-textPrimary truncate max-w-[300px]">{tenderPdf.name}</span>
+                  <span className="text-xs text-government-textMuted">({(tenderPdf.size / 1024).toFixed(1)} KB)</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setTenderPdf(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                  className="text-government-rejectedRed hover:bg-government-rejectedBg p-1 rounded transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="pt-4 border-t border-government-border flex justify-end gap-3">
             <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-government-textPrimary hover:bg-gray-100 rounded-btn font-medium transition-colors">Cancel</button>
-            <button type="button" className="px-4 py-2 bg-government-primary hover:bg-government-primaryDark text-white rounded-btn font-medium transition-colors">Create Tender</button>
+            <button
+              type="submit"
+              disabled={formLoading}
+              className="px-4 py-2 bg-government-primary hover:bg-government-primaryDark disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-btn font-medium transition-colors flex items-center gap-2"
+            >
+              {formLoading && <RefreshCw size={14} className="animate-spin" />}
+              Create Tender
+            </button>
           </div>
         </form>
       </Modal>

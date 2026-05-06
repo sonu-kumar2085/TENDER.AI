@@ -18,8 +18,6 @@ const ProposalAnalysis = () => {
   const [expandedTabs, setExpandedTabs] = useState({ matched: true, unmatched: true, manual: true });
   const [decision, setDecision] = useState('');
   const [justification, setJustification] = useState('');
-  const [finalAction, setFinalAction] = useState('');
-  const [finalRemarks, setFinalRemarks] = useState('');
 
   const toggleTab = (tab) => setExpandedTabs(prev => ({ ...prev, [tab]: !prev[tab] }));
 
@@ -163,10 +161,22 @@ const ProposalAnalysis = () => {
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-4 pt-4 border-t border-government-border">
-            <button className="flex items-center gap-2 px-4 py-2 text-government-primary border border-government-primary hover:bg-government-surfaceHover rounded-btn font-medium transition-colors">
-              <Download size={18} />
-              Download Proposal PDF
-            </button>
+            {proposal.proposalDocuments && proposal.proposalDocuments.length > 0 ? (
+              proposal.proposalDocuments.map((doc, idx) => (
+                <a
+                  key={idx}
+                  href={doc.cloudinaryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 text-government-primary border border-government-primary hover:bg-government-surfaceHover rounded-btn font-medium transition-colors text-sm"
+                >
+                  <Download size={16} />
+                  {doc.fileName || `Document ${idx + 1}`}
+                </a>
+              ))
+            ) : (
+              <span className="text-sm text-government-textMuted italic">No proposal documents uploaded</span>
+            )}
           </div>
         </div>
 
@@ -342,46 +352,6 @@ const ProposalAnalysis = () => {
           )}
         </div>
 
-        <div className="bg-government-eligibleBg border-2 border-government-primary rounded-card p-6 mt-8">
-          <h2 className="text-xl font-bold text-government-primaryDark mb-1">Final Evaluation Decision</h2>
-          <p className="text-sm text-government-textSecondary mb-6">This action is irreversible. Ensure all manual reviews above are completed before proceeding.</p>
-
-          <div className="flex flex-col lg:flex-row gap-4 mb-6">
-            <button 
-              onClick={() => setFinalAction('approve')}
-              className={`flex-1 py-3 px-4 rounded-btn font-bold text-white transition-all ${finalAction === 'approve' ? 'bg-government-eligibleGreen ring-4 ring-green-200' : 'bg-government-primary hover:bg-government-eligibleGreen'}`}
-            >
-              ✓ APPROVE — Mark as Eligible
-            </button>
-            <button 
-               onClick={() => setFinalAction('reject')}
-              className={`flex-1 py-3 px-4 rounded-btn font-bold text-white transition-all ${finalAction === 'reject' ? 'bg-government-rejectedRed ring-4 ring-red-200' : 'bg-[#D32F2F] hover:bg-government-rejectedRed'}`}
-            >
-              ✗ REJECT — Mark as Ineligible
-            </button>
-            <button 
-               onClick={() => setFinalAction('clarify')}
-              className={`flex-1 py-3 px-4 rounded-btn font-bold text-white transition-all ${finalAction === 'clarify' ? 'bg-[#F57C00] ring-4 ring-orange-200' : 'bg-government-reviewAmber hover:bg-[#F57C00]'}`}
-            >
-              ↩ Send Back for Clarification
-            </button>
-          </div>
-
-          <textarea 
-            className="w-full px-4 py-3 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary text-sm mb-4 bg-white" 
-            rows="3" 
-            placeholder="Final Remarks (required)"
-            value={finalRemarks}
-            onChange={(e) => setFinalRemarks(e.target.value)}
-          ></textarea>
-
-          <button 
-            disabled={finalRemarks.length < 30 || !finalAction}
-            className="w-full py-3 bg-government-primary hover:bg-government-primaryDark disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-btn font-bold text-lg transition-colors uppercase tracking-wide"
-          >
-            Submit Final Decision
-          </button>
-        </div>
 
       </main>
       <Footer />

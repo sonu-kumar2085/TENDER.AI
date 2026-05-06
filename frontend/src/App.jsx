@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import TenderDetail from './pages/TenderDetail';
 import ProposalAnalysis from './pages/ProposalAnalysis';
+import ManageOfficers from './pages/ManageOfficers';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = React.useState(!!localStorage.getItem('token'));
@@ -24,6 +25,10 @@ function App() {
         <Route 
           path="/tender/:tenderId/proposal/:proposalId" 
           element={isAuthenticated ? <ProposalAnalysis /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/officers" 
+          element={isAuthenticated ? <ManageOfficers /> : <Navigate to="/login" />} 
         />
 
         <Route path="/" element={<Navigate to="/login" />} />
