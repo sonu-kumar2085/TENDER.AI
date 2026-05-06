@@ -15,7 +15,7 @@ const Dashboard = () => {
   const [tenderName, setTenderName] = useState('');
   const [tenderType, setTenderType] = useState('Medical & Healthcare');
   const [issuingAuthority, setIssuingAuthority] = useState('');
-  const [submissionDeadline, setSubmissionDeadline] = useState('');
+
   const [estimatedValue, setEstimatedValue] = useState('');
   const [description, setDescription] = useState('');
   const [tenderPdf, setTenderPdf] = useState(null);
@@ -65,7 +65,7 @@ const Dashboard = () => {
     setTenderName('');
     setTenderType('Medical & Healthcare');
     setIssuingAuthority('');
-    setSubmissionDeadline('');
+
     setEstimatedValue('');
     setDescription('');
     setTenderPdf(null);
@@ -90,7 +90,7 @@ const Dashboard = () => {
       formData.append('name', tenderName);
       formData.append('type', tenderType);
       formData.append('issuingAuthority', issuingAuthority);
-      formData.append('submissionDeadline', submissionDeadline);
+
       formData.append('estimatedValue', estimatedValue);
       formData.append('description', description);
       formData.append('tenderPdf', tenderPdf);
@@ -293,29 +293,18 @@ const Dashboard = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-government-textPrimary mb-1">Submission Deadline *</label>
-              <input
-                type="datetime-local"
-                required
-                value={submissionDeadline}
-                onChange={(e) => setSubmissionDeadline(e.target.value)}
-                className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary text-sm"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-government-textPrimary mb-1">Estimated Value (INR) *</label>
-            <div className="relative">
-              <span className="absolute left-3 top-2 text-government-textMuted">₹</span>
-              <input
-                type="number"
-                required
-                value={estimatedValue}
-                onChange={(e) => setEstimatedValue(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary"
-                placeholder="e.g. 5000000"
-              />
+              <label className="block text-sm font-medium text-government-textPrimary mb-1">Estimated Value (INR) *</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2 text-government-textMuted">₹</span>
+                <input
+                  type="number"
+                  required
+                  value={estimatedValue}
+                  onChange={(e) => setEstimatedValue(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary text-sm"
+                  placeholder="e.g. 5000000"
+                />
+              </div>
             </div>
           </div>
 

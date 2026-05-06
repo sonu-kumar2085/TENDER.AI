@@ -109,7 +109,7 @@ const Footer = () => {
             <FileText size={20} className="text-government-primary mt-0.5 flex-shrink-0" />
             <div>
               <h3 className="font-bold text-government-primaryDark mb-1">Creating a Tender</h3>
-              <p>From the Dashboard, click <strong>+ Add New Tender</strong>. Fill in the tender name, type, issuing authority, submission deadline, and estimated value. Upload the official tender PDF document and click <strong>Create Tender</strong>.</p>
+              <p>From the Dashboard, click <strong>+ Add New Tender</strong>. Fill in the tender name, type, issuing authority, and estimated value. Upload the official tender PDF document and click <strong>Create Tender</strong>.</p>
             </div>
           </div>
 

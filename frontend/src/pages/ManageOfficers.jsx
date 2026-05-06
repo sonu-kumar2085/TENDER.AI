@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
@@ -119,9 +119,17 @@ const ManageOfficers = () => {
     setIsModalOpen(true);
   };
 
+  const breadcrumbs = (
+    <div className="flex items-center gap-2">
+      <Link to="/dashboard" className="hover:text-government-primary transition-colors font-medium">Dashboard</Link>
+      <span>&gt;</span>
+      <span className="text-government-primaryDark font-medium">Manage Officers</span>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-government-bg">
-      <Navbar />
+      <Navbar breadcrumbs={breadcrumbs} />
 
       <main className="flex-grow w-full max-w-7xl mx-auto py-8 px-6 sm:px-12 animate-fadeIn">
         {/* Header */}
