@@ -10,13 +10,11 @@ const createProposal = async (req, res, next) => {
     const { tenderId } = req.params;
     const { companyName, companyRegistrationNo, contactPersonName, contactEmail, contactPhone, bidValue, isMsmeRegistered } = req.body;
 
-    const tender = await Tender.findOne({ tenderId });
+    const tender = await Tender.findOne({ tenderId, department: req.user.department });
     if (!tender) return sendError(res, 'Tender not found', 404);
     
     if (tender.status !== 'open') return sendError(res, 'Tender is not open', 400);
-    if (new Date(tender.submissionDeadline) < new Date()) {
-      return sendError(res, 'Tender deadline has passed', 400);
-    }
+
 
     if (!req.files || req.files.length === 0) {
       return sendError(res, 'Proposal documents are required', 400);
@@ -67,7 +65,7 @@ const createProposal = async (req, res, next) => {
 
 const getProposalsByTender = async (req, res, next) => {
   try {
-    const tender = await Tender.findOne({ tenderId: req.params.tenderId });
+    const tender = await Tender.findOne({ tenderId: req.params.tenderId, department: req.user.department });
     if (!tender) return sendError(res, 'Tender not found', 404);
 
     const proposals = await Proposal.find({ tender: tender._id })
@@ -84,9 +82,9 @@ const getProposalById = async (req, res, next) => {
   try {
     const proposal = await Proposal.findOne({ proposalId: req.params.proposalId })
       .populate('analysisResult')
-      .populate('tender', 'tenderId name type issuingAuthority status estimatedValue submissionDeadline');
+      .populate('tender', 'tenderId name type issuingAuthority status estimatedValue department');
       
-    if (!proposal) return sendError(res, 'Proposal not found', 404);
+    if (!proposal || !proposal.tender || proposal.tender.department !== req.user.department) return sendError(res, 'Proposal not found', 404);
 
     return sendSuccess(res, proposal);
   } catch (error) {
@@ -102,8 +100,8 @@ const makeDecision = async (req, res, next) => {
       return sendError(res, 'Remarks must be at least 30 characters', 400);
     }
 
-    const proposal = await Proposal.findOne({ proposalId: req.params.proposalId });
-    if (!proposal) return sendError(res, 'Proposal not found', 404);
+    const proposal = await Proposal.findOne({ proposalId: req.params.proposalId }).populate('tender', 'department');
+    if (!proposal || !proposal.tender || proposal.tender.department !== req.user.department) return sendError(res, 'Proposal not found', 404);
 
     if (proposal.officerDecision && proposal.officerDecision.decision) {
       return sendError(res, 'Final decision already recorded. This action is irreversible.', 403);
@@ -143,8 +141,8 @@ const reviewItem = async (req, res, next) => {
       return sendError(res, 'Justification must be at least 20 characters', 400);
     }
 
-    const proposal = await Proposal.findOne({ proposalId: req.params.proposalId });
-    if (!proposal) return sendError(res, 'Proposal not found', 404);
+    const proposal = await Proposal.findOne({ proposalId: req.params.proposalId }).populate('tender', 'department');
+    if (!proposal || !proposal.tender || proposal.tender.department !== req.user.department) return sendError(res, 'Proposal not found', 404);
 
     if (!proposal.analysisResult) {
       return sendError(res, 'No analysis result found for this proposal', 404);

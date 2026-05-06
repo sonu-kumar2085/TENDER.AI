@@ -10,7 +10,6 @@ const tenderSchema = new mongoose.Schema({
     enum: ['Medical & Healthcare', 'Food & Catering', 'Construction & Infrastructure', 'Technology & IT', 'Technical & Engineering', 'Finance & Consulting']
   },
   issuingAuthority: { type: String, required: true },
-  submissionDeadline: { type: Date, required: true },
   estimatedValue: { type: Number, required: true }, // integer INR
   description: { type: String },
   status: { 
@@ -27,6 +26,7 @@ const tenderSchema = new mongoose.Schema({
     default: 'pending' 
   },
   mlExtractionError: { type: String, default: null },
+  department: { type: String, required: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 

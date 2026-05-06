@@ -5,7 +5,7 @@ const mlService = require('../services/mlService');
 
 const createTender = async (req, res, next) => {
   try {
-    const { name, type, issuingAuthority, submissionDeadline, estimatedValue, description } = req.body;
+    const { name, type, issuingAuthority, estimatedValue, description } = req.body;
     
     if (!req.file) {
       return sendError(res, 'Tender PDF is required', 400);
@@ -17,11 +17,11 @@ const createTender = async (req, res, next) => {
       name,
       type,
       issuingAuthority,
-      submissionDeadline,
       estimatedValue,
       description,
       tenderPdfUrl: uploadResult.secure_url,
       tenderPdfPublicId: uploadResult.public_id,
+      department: req.user.department,
       createdBy: req.user.userId,
       mlExtractionStatus: 'pending'
     });
@@ -39,7 +39,7 @@ const createTender = async (req, res, next) => {
 const getTenders = async (req, res, next) => {
   try {
     const { type, status, page = 1, limit = 20 } = req.query;
-    const query = {};
+    const query = { department: req.user.department };
     if (type) query.type = type;
     if (status) query.status = status;
 
@@ -73,6 +73,7 @@ const getTenderCategories = async (req, res, next) => {
     ];
 
     const agg = await Tender.aggregate([
+      { $match: { department: req.user.department } },
       {
         $group: {
           _id: '$type',
@@ -101,7 +102,7 @@ const getTenderCategories = async (req, res, next) => {
 
 const getTenderById = async (req, res, next) => {
   try {
-    const tender = await Tender.findOne({ tenderId: req.params.tenderId });
+    const tender = await Tender.findOne({ tenderId: req.params.tenderId, department: req.user.department });
     if (!tender) return sendError(res, 'Tender not found', 404);
     
     return sendSuccess(res, tender);
@@ -118,7 +119,7 @@ const updateTenderStatus = async (req, res, next) => {
     
     const { status } = req.body;
     const tender = await Tender.findOneAndUpdate(
-      { tenderId: req.params.tenderId },
+      { tenderId: req.params.tenderId, department: req.user.department },
       { status },
       { new: true, runValidators: true }
     );
@@ -138,7 +139,7 @@ const deleteTender = async (req, res, next) => {
     }
 
     const tender = await Tender.findOneAndUpdate(
-      { tenderId: req.params.tenderId },
+      { tenderId: req.params.tenderId, department: req.user.department },
       { status: 'cancelled' },
       { new: true }
     );

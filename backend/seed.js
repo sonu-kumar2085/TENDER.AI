@@ -113,10 +113,10 @@ const seedDB = async () => {
         name: `Tender for ${tenderTypes[i]} 2025`,
         type: tenderTypes[i],
         issuingAuthority: 'CRPF HQ',
-        submissionDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         estimatedValue: 5000000 + (i * 1000000),
         description: `Detailed procurement requirement for ${tenderTypes[i]}`,
         status: 'open',
+        department: 'CRPF',
         createdBy: officer1._id,
         mlExtractionStatus: 'completed',
         extractedData: {
