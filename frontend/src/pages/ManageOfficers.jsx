@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -23,14 +23,7 @@ const ManageOfficers = () => {
   const officerStr = localStorage.getItem('officer');
   const currentOfficer = officerStr ? JSON.parse(officerStr) : {};
 
-  // Redirect non-admins
-  useEffect(() => {
-    if (currentOfficer.role !== 'admin') {
-      navigate('/dashboard');
-    }
-  }, []);
-
-  const fetchOfficers = async () => {
+  const fetchOfficers = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch('http://localhost:5000/api/officers', {
@@ -45,13 +38,16 @@ const ManageOfficers = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
+  // Redirect non-admins or fetch officers
   useEffect(() => {
-    if (currentOfficer.role === 'admin') {
+    if (currentOfficer.role !== 'admin') {
+      navigate('/dashboard');
+    } else {
       fetchOfficers();
     }
-  }, []);
+  }, [currentOfficer.role, navigate, fetchOfficers]);
 
   const handleAddOfficer = async (e) => {
     e.preventDefault();
@@ -74,7 +70,7 @@ const ManageOfficers = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error?.message || 'Failed to add officer');
+        throw new Error(data.error?.message || data.message || 'Failed to add officer');
       }
 
       // Reset form and close modal
@@ -104,7 +100,7 @@ const ManageOfficers = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error?.message || 'Failed to delete officer');
+        throw new Error(data.error?.message || data.message || 'Failed to delete officer');
       }
 
       fetchOfficers();
@@ -115,11 +111,19 @@ const ManageOfficers = () => {
     }
   };
 
+  const openAddModal = () => {
+    setFormError(null);
+    setNewName('');
+    setNewEmployeeId('');
+    setNewPassword('');
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-government-bg">
       <Navbar />
 
-      <main className="flex-grow w-full max-w-7xl mx-auto py-8 px-6 sm:px-12">
+      <main className="flex-grow w-full max-w-7xl mx-auto py-8 px-6 sm:px-12 animate-fadeIn">
         {/* Header */}
         <section className="bg-government-eligibleBg border-b-2 border-government-border py-8 px-6 sm:px-12 w-full rounded-t-xl mb-8 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -141,7 +145,7 @@ const ManageOfficers = () => {
                 {officers.length} Officers
               </div>
               <button
-                onClick={() => { setFormError(null); setIsModalOpen(true); }}
+                onClick={openAddModal}
                 className="bg-white border-2 border-government-primary text-government-primary hover:bg-government-primary hover:text-white transition-colors px-5 py-2 rounded-btn font-semibold shadow-sm flex items-center gap-2"
               >
                 <UserPlus size={18} />
@@ -172,7 +176,7 @@ const ManageOfficers = () => {
               </thead>
               <tbody className="divide-y divide-government-border">
                 {officers.map((off, idx) => (
-                  <tr key={off._id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={off._id || off.employeeId} className="hover:bg-gray-50 transition-colors animate-slideUp" style={{ animationDelay: `${idx * 50}ms` }}>
                     <td className="p-4 text-government-textMuted font-medium">{idx + 1}</td>
                     <td className="p-4">
                       <div className="flex items-center gap-3">

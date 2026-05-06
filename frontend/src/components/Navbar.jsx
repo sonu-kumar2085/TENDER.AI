@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { ChevronDown, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, LogOut, Users } from 'lucide-react';
 
 const Navbar = ({ breadcrumbs }) => {
+  const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const officerStr = localStorage.getItem('officer');
   const officer = officerStr ? JSON.parse(officerStr) : { name: 'Officer', department: 'Department' };
@@ -44,8 +46,15 @@ const Navbar = ({ breadcrumbs }) => {
           {showProfileMenu && (
             <div className="absolute top-14 right-0 bg-white shadow-cardHover border border-government-border rounded-btn py-2 w-48 z-50 animate-slideDown">
               <div
+                className="px-4 py-2 text-sm text-government-textPrimary hover:bg-government-surfaceHover flex items-center gap-2 cursor-pointer transition-colors rounded-sm mx-1"
+                onClick={(e) => { e.stopPropagation(); setShowProfileMenu(false); navigate('/officers'); }}
+              >
+                <Users size={16} />
+                Manage Officers
+              </div>
+              <div
                 className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer transition-colors rounded-sm mx-1"
-                onClick={handleLogout}
+                onClick={(e) => { e.stopPropagation(); handleLogout(); }}
               >
                 <LogOut size={16} />
                 Sign Out
