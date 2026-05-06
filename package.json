@@ -7,7 +7,7 @@
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "dev:ml": "cd backend/ML && uvicorn main:app --reload --port 8000",
-    "install:all": "npm install concurrently && cd frontend && npm install && cd ../backend && npm install && cd ML && pip install -r requirements.txt"
+    "install:all": "npm install concurrently && cd frontend && npm install && cd ../backend && npm install && cd ML && pip install -r requirements.txt && winget install --id UB-Mannheim.TesseractOCR --accept-package-agreements --accept-source-agreements && winget install --id ArtifexSoftware.Ghostscript --accept-package-agreements --accept-source-agreements"
   },
   "dependencies": {
     "concurrently": "^8.2.2"

@@ -1,0 +1,80 @@
+{
+  "status": "SUCCESS",
+  "document_type": "DIGITAL",
+  "hash": "f0735471f199f973bae9213fe868c30e",
+  "metadata": {
+    "filename": "tender.pdf",
+    "size_bytes": 17005,
+    "page_count": 1,
+    "author": "",
+    "creator": "",
+    "producer": "WeasyPrint 62.3",
+    "creation_date": "",
+    "modification_date": ""
+  },
+  "statistics": {
+    "scanned_pages": 0,
+    "digital_pages": 1
+  },
+  "pages": [
+    {
+      "page_number": 1,
+      "page_type": "DIGITAL",
+      "language": "en",
+      "ocr_confidence": 1.0,
+      "page_hash": "3d535855bddc3c64a9c52b1a83e28507",
+      "text_quality": 0.714,
+      "text": "GOVERNMENT OF INDIA\nMinistry of Home Affairs\nCRPF Procurement Wing, New Delhi - 110 001\nTENDER NOTICE: TND-2025-0001\nTender Category Medical & Healthcare\nEstimated Tender Value Rs. 50,00,000/- (Rupees Fifty Lakhs Only)\nEarnest Money Deposit (EMD) Rs. 5,00,000/- (Rupees Five Lakhs Only)\nSubmission Deadline 30 June 2025, 05:00 PM IST\n1. SCOPE OF SUPPLY\nItem Description Qty. Minimum Specifications\nVentilator (ICU Grade) 20 Units Invasive/Non-Invasive; FiO2: 21-100%; 4hr Battery; CE/FDA approved.\nDefibrillator (Biphasic) 30 Units Biphasic; AED mode; 1-360 J; IP44 rated; 3-year warranty.\nPatient Monitor 50 Units 12-inch TFT; ECG, SpO2, NIBP, EtCO2; LAN/Wi-Fi.\n2. ELIGIBILITY CRITERIA\nBidders must satisfy all conditions below to qualify for technical evaluation:\n• Turnover: Min. Rs. 2,00,00,000/- per year for the last 3 financial years.\n• Experience: Min. 5 years in supply to Govt/PSU/Defence/Hospitals.\n• Certification: Valid ISO 13485:2016 (Medical Devices QMS) and CE/FDA/BIS.\n• Blacklisting: Must not be blacklisted by any Government Department.\n3. EVALUATION METHODOLOGY\nEvaluation will follow a Two-Bid System. A minimum technical score of 60/100 is required. The contract will be\nawarded to the L1 (Lowest Bidder) among technically qualified firms.\nSh. Rajendra Kumar Sharma, IPS\nDeputy Inspector General (Procurement)\nCRPF Procurement Wing, New Delhi\nDate: May 07, 2026",
+      "tables": [
+        [
+          [
+            "GOVERNMENT OF INDIA\nMinistry of Home Affairs\nCRPF Procurement Wing, New Delhi - 110 001"
+          ],
+          [
+            "TENDER NOTICE: TND-2025-0001"
+          ]
+        ],
+        [
+          [
+            "Tender Category",
+            "Medical & Healthcare"
+          ],
+          [
+            "Estimated Tender Value",
+            "Rs. 50,00,000/- (Rupees Fifty Lakhs Only)"
+          ],
+          [
+            "Earnest Money Deposit (EMD)",
+            "Rs. 5,00,000/- (Rupees Five Lakhs Only)"
+          ],
+          [
+            "Submission Deadline",
+            "30 June 2025, 05:00 PM IST"
+          ]
+        ],
+        [
+          [
+            "Item Description",
+            "Qty.",
+            "Minimum Specifications"
+          ],
+          [
+            "Ventilator (ICU Grade)",
+            "20 Units",
+            "Invasive/Non-Invasive; FiO2: 21-100%; 4hr Battery; CE/FDA approved."
+          ],
+          [
+            "Defibrillator (Biphasic)",
+            "30 Units",
+            "Biphasic; AED mode; 1-360 J; IP44 rated; 3-year warranty."
+          ],
+          [
+            "Patient Monitor",
+            "50 Units",
+            "12-inch TFT; ECG, SpO2, NIBP, EtCO2; LAN/Wi-Fi."
+          ]
+        ]
+      ]
+    }
+  ]
+}

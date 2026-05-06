@@ -1,0 +1,110 @@
+{
+  "status": "SUCCESS",
+  "document_type": "DIGITAL",
+  "hash": "2259198af559d84d10d0a16e97606535",
+  "metadata": {
+    "filename": "Proposal_Medical_Equipment_TND-2025-0001.pdf",
+    "size_bytes": 18338,
+    "page_count": 2,
+    "author": "",
+    "creator": "",
+    "producer": "WeasyPrint 62.3",
+    "creation_date": "",
+    "modification_date": ""
+  },
+  "statistics": {
+    "scanned_pages": 0,
+    "digital_pages": 2
+  },
+  "pages": [
+    {
+      "page_number": 1,
+      "page_type": "DIGITAL",
+      "language": "en",
+      "ocr_confidence": 1.0,
+      "page_hash": "205c098371ddb4049ff8dece219f597f",
+      "text_quality": 0.693,
+      "text": "BID PROPOSAL FOR SUPPLY OF MEDICAL\nEQUIPMENT\nTender Reference No: TND-2025-0001\nTo: The Deputy Inspector General (Procurement), CRPF HQ, New Delhi\n1. BIDDER QUALIFICATION SUMMARY\nIn response to Tender No. TND-2025-0001, we hereby submit our technical and financial bid. We\nconfirm that we meet all eligibility criteria [cite: 71, 72].\nCriterion Bidder Compliance Statement\nAnnual Turnover (> Rs. 2 Cr) Complied (Audited Balance Sheets for FY 22-23, 23-24, 24-25\nattached) [cite: 74, 82]\nExperience (> 5 Years) Complied (Experience in Govt/PSU/Defence supply since 2019)\n[cite: 74, 82]\nISO 13485:2016 Complied (Valid Medical Devices QMS Certificate attached) [cite:\n74, 82]\nNon-Blacklisting Confirmed (Notarised Self-Declaration on Rs. 100 Stamp Paper\nattached) [cite: 77, 82]\n2. TECHNICAL SPECIFICATIONS COMPLIANCE\nItem Qty Compliance with Tender Specifications [cite: 68]\nVentilator (ICU Grade) 20 Complied: Invasive/Non-Invasive; FiO2: 21-100%; 4hr Battery; CE/FDA\nApproved.\nDefibrillator 30 Complied: Biphasic; AED mode; 1-360 J; 12-lead ECG; IP44 rated.\n(Biphasic)\nPatient Monitor 50 Complied: ECG, SpO2, NIBP, EtCO2; 12-inch TFT; LAN/Wi-Fi connectivity.\n3. COMMERCIAL TERMS & COMMITMENTS\n• Bid Validity: 180 Days from the date of submission [cite: 98].\n• Delivery Period: Delivery, installation, and commissioning within 120 days of PO [cite: 98].\n• Warranty: 3 Years comprehensive on-site warranty for all equipment [cite: 98].\n• Performance Security: We agree to furnish 10% PBG within 15 days of award [cite: 98].\n• Payment Terms: Acceptance of 30/60/10% payment tranche system [cite: 101].",
+      "tables": [
+        [
+          [
+            "Criterion",
+            "Bidder Compliance Statement"
+          ],
+          [
+            "Annual Turnover (> Rs. 2 Cr)",
+            "Complied (Audited Balance Sheets for FY 22-23, 23-24, 24-25\nattached) [cite: 74, 82]"
+          ],
+          [
+            "Experience (> 5 Years)",
+            "Complied (Experience in Govt/PSU/Defence supply since 2019)\n[cite: 74, 82]"
+          ],
+          [
+            "ISO 13485:2016",
+            "Complied (Valid Medical Devices QMS Certificate attached) [cite:\n74, 82]"
+          ],
+          [
+            "Non-Blacklisting",
+            "Confirmed (Notarised Self-Declaration on Rs. 100 Stamp Paper\nattached) [cite: 77, 82]"
+          ]
+        ],
+        [
+          [
+            "Item",
+            "Qty",
+            "Compliance with Tender Specifications [cite: 68]"
+          ],
+          [
+            "Ventilator (ICU Grade)",
+            "20",
+            "Complied: Invasive/Non-Invasive; FiO2: 21-100%; 4hr Battery; CE/FDA\nApproved."
+          ],
+          [
+            "Defibrillator\n(Biphasic)",
+            "30",
+            "Complied: Biphasic; AED mode; 1-360 J; 12-lead ECG; IP44 rated."
+          ],
+          [
+            "Patient Monitor",
+            "50",
+            "Complied: ECG, SpO2, NIBP, EtCO2; 12-inch TFT; LAN/Wi-Fi connectivity."
+          ]
+        ]
+      ]
+    },
+    {
+      "page_number": 2,
+      "page_type": "DIGITAL",
+      "language": "en",
+      "ocr_confidence": 1.0,
+      "page_hash": "1108c0625b56d319d0681781ed3daf28",
+      "text_quality": 0.643,
+      "text": "4. FINANCIAL BID SUMMARY\nThe total estimated tender value is Rs. 50,00,000/- [cite: 59]. Our competitive financial bid is\nenclosed in the separate Financial Bid envelope as per the Two-Bid System [cite: 87].\n__________________________\n(Authorized Signatory)\nWith Company Seal\nDate: May 07, 2026",
+      "tables": [
+        [
+          [
+            "4. FINANCIAL BID SUMMARY"
+          ],
+          [
+            "The total estimated tender value is Rs. 50,00,000/- [cite: 59]. Our competitive financial bid is"
+          ],
+          [
+            "enclosed in the separate Financial Bid envelope as per the Two-Bid System [cite: 87]."
+          ],
+          [
+            "__________________________"
+          ],
+          [
+            "(Authorized Signatory)"
+          ],
+          [
+            "With Company Seal"
+          ],
+          [
+            "Date: May 07, 2026"
+          ]
+        ]
+      ]
+    }
+  ]
+}

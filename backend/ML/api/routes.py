@@ -1,3 +1,4 @@
+import logging
 import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -9,6 +10,8 @@ from services.reasoning import ReasoningLayer, AmbiguityScoreEngine
 from services.decision import DecisionEngine
 from services.fraud import FraudDetectionLayer
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 tender_extractor = TenderExtractor()
@@ -16,7 +19,7 @@ bidder_extractor = BidderExtractor()
 reasoning_layer = ReasoningLayer()
 
 async def download_file(url: str) -> bytes:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.get(url)
         if response.status_code != 200:
             raise HTTPException(status_code=400, detail=f"Failed to download from {url}")
@@ -38,8 +41,17 @@ async def extract_data(req: ExtractRequest):
             
             file_bytes = await download_file(req.pdfUrl)
             ingestion_result = process_pdf_bytes(file_bytes, "tender.pdf")
+            if ingestion_result.get("status") == "FAILED":
+                raise Exception(f"Ingestion failed: {ingestion_result.get('error')}")
+            
             all_text = "\n".join([p["text"] for p in ingestion_result["pages"]])
+            logger.info(f"[EXTRACT] Tender raw text length: {len(all_text)}")
+            logger.info(f"[EXTRACT] Tender raw text preview: {all_text[:500]}")
+            
             conditions = tender_extractor.extract_conditions(all_text)
+            logger.info(f"[EXTRACT] Tender conditions count: {len(conditions)}")
+            for c in conditions:
+                logger.info(f"[EXTRACT] Condition: {c['field']}={c['value']} ({c['operator']})")
             
             return {
                 "success": True,
@@ -47,7 +59,7 @@ async def extract_data(req: ExtractRequest):
                     "eligibilityCriteria": conditions,
                     "requiredDocuments": [],
                     "clauses": [],
-                    "rawText": all_text[:1000] # truncate for db size
+                    "rawText": all_text[:1000]
                 }
             }
             
@@ -61,9 +73,15 @@ async def extract_data(req: ExtractRequest):
                 if url:
                     file_bytes = await download_file(url)
                     ingestion_result = process_pdf_bytes(file_bytes, pdf_obj.get("fileName", "doc.pdf"))
+                    if ingestion_result.get("status") == "FAILED":
+                        continue
                     all_text += "\n" + "\n".join([p["text"] for p in ingestion_result["pages"]])
                     
+            logger.info(f"[EXTRACT] Proposal raw text length: {len(all_text)}")
+            logger.info(f"[EXTRACT] Proposal raw text preview: {all_text[:500]}")
+            
             claims = bidder_extractor.extract_claims(all_text)
+            logger.info(f"[EXTRACT] Proposal claims: {claims}")
             
             return {
                 "success": True,
@@ -73,6 +91,7 @@ async def extract_data(req: ExtractRequest):
             raise HTTPException(status_code=400, detail="Invalid documentType")
             
     except Exception as e:
+        logger.error(f"[EXTRACT] Error: {str(e)}")
         return {"success": False, "error": str(e)}
 
 
@@ -89,12 +108,33 @@ async def analyze_proposal(req: AnalyzeRequest):
         tender_conditions = req.tenderExtractedData.get("eligibilityCriteria", [])
         claims = req.proposalExtractedData
         
-        # Reasoning Layer (Assuming ocr_confidence is 1.0 since we bypassed full ingestion state here)
+        logger.info(f"[ANALYZE] Tender conditions count: {len(tender_conditions)}")
+        logger.info(f"[ANALYZE] Proposal claims: {claims}")
+        
+        # Reasoning Layer
         reasoning_result = reasoning_layer.build_evidence_graph(tender_conditions, claims, 1.0)
         evidence_nodes = reasoning_result["evidence_nodes"]
         
+        logger.info(f"[ANALYZE] Evidence nodes count: {len(evidence_nodes)}")
+        for node in evidence_nodes:
+            logger.info(
+                f"[ANALYZE] Node: {node['condition_id']} "
+                f"field={node['claim_field']} "
+                f"value={node['extracted_value']} "
+                f"conflict={node['internal_conflict']}"
+            )
+        
+        # Compute conflict ratio for ambiguity
+        conflict_count = sum(
+            1 for n in evidence_nodes if n.get("internal_conflict")
+        )
+        conflict_ratio = (
+            conflict_count / len(evidence_nodes)
+            if evidence_nodes else 0.0
+        )
+        
         # Ambiguity
-        ambiguity_data = AmbiguityScoreEngine.compute_score(1.0, 0.0)
+        ambiguity_data = AmbiguityScoreEngine.compute_score(1.0, conflict_ratio)
         
         # Decision Layer
         decision_result = DecisionEngine.run_decision_stack(tender_conditions, evidence_nodes, ambiguity_data)
@@ -117,7 +157,7 @@ async def analyze_proposal(req: AnalyzeRequest):
                 "sourcePage": "1",
                 "confidence": float(node.get("confidence", 1.0)),
                 "clauseReference": str(node.get("source_clause", "")),
-                "aiExplanation": str(node.get("reasoning", "Logic validation"))
+                "aiExplanation": str(node.get("reason", "Logic validation"))
             }
             if node.get("verdict") == "ELIGIBLE":
                 matched.append(crit)
@@ -139,12 +179,12 @@ async def analyze_proposal(req: AnalyzeRequest):
             fraud_layer = FraudDetectionLayer(bidders)
             fraud_scores = fraud_layer.run_all()
             
-            my_fraud = fraud_scores.get(req.proposalId, {})
-            if my_fraud.get("risk_level") in ["High", "Critical"]:
+            my_fraud = fraud_scores.get("results", {}).get(req.proposalId, {})
+            if my_fraud.get("score") in ["MEDIUM", "HIGH"]:
                 fraud_flags.append({
                     "flagType": "CROSS_BIDDER_ANOMALY",
                     "description": "Potential fraud detected comparing with other bids",
-                    "severity": str(my_fraud.get("risk_level")).lower(),
+                    "severity": str(my_fraud.get("score")).lower(),
                     "affectedProposals": []
                 })
 
@@ -157,7 +197,8 @@ async def analyze_proposal(req: AnalyzeRequest):
                 "matchedCriteria": matched,
                 "unmatchedCriteria": unmatched,
                 "manualReviewItems": [],
-                "fraudFlags": fraud_flags
+                "fraudFlags": fraud_flags,
+                "aiSummary": reasoning_result.get("summary", "")
             }
         }
     except Exception as e:

@@ -4,7 +4,9 @@ pydantic
 pdfplumber
 PyMuPDF
 pytesseract
-opencv-python-headless
+opencv-python
+langdetect
+camelot-py[cv]
 spacy
 groq
 numpy
