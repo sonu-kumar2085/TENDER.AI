@@ -14,6 +14,9 @@ router.get('/:tenderId', tenderController.getTenderById);
 router.patch('/:tenderId/status', tenderController.updateTenderStatus);
 router.delete('/:tenderId', tenderController.deleteTender);
 
+// Admin: re-trigger ML extraction for a tender (if failed/pending)
+router.post('/:tenderId/retry-extraction', tenderController.retryTenderExtraction);
+
 // Mount nested proposal routes
 router.use('/:tenderId/proposals', proposalRoutes);
 

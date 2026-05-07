@@ -1,4 +1,6 @@
 const Tender = require('../models/Tender');
+const Proposal = require('../models/Proposal');
+const Analysis = require('../models/Analysis');
 const { sendSuccess, sendError } = require('../utils/responseHelper');
 const cloudinaryService = require('../services/cloudinaryService');
 const mlService = require('../services/mlService');
@@ -138,15 +140,58 @@ const deleteTender = async (req, res, next) => {
       return sendError(res, 'Admin privileges required', 403);
     }
 
-    const tender = await Tender.findOneAndUpdate(
-      { tenderId: req.params.tenderId, department: req.user.department },
-      { status: 'cancelled' },
-      { new: true }
-    );
-    
+    const tender = await Tender.findOne({
+      tenderId: req.params.tenderId,
+      department: req.user.department
+    });
+
     if (!tender) return sendError(res, 'Tender not found', 404);
 
-    return sendSuccess(res, tender, 'Tender cancelled');
+    // ── Cascade: find all proposals for this tender ──────────────────────
+    const proposals = await Proposal.find({ tender: tender._id }).select('_id analysisResult');
+
+    // Delete all Analysis records linked to those proposals
+    const analysisIds = proposals
+      .map(p => p.analysisResult)
+      .filter(Boolean);
+
+    if (analysisIds.length > 0) {
+      await Analysis.deleteMany({ _id: { $in: analysisIds } });
+    }
+
+    // Delete all proposals
+    await Proposal.deleteMany({ tender: tender._id });
+
+    // Finally delete the tender itself
+    await Tender.findByIdAndDelete(tender._id);
+
+    return sendSuccess(res, { tenderId: tender.tenderId }, 'Tender and all associated proposals deleted successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+const retryTenderExtraction = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return sendError(res, 'Admin privileges required', 403);
+    }
+
+    const tender = await Tender.findOne({ tenderId: req.params.tenderId, department: req.user.department });
+    if (!tender) return sendError(res, 'Tender not found', 404);
+
+    if (!tender.tenderPdfUrl) {
+      return sendError(res, 'Tender has no PDF to extract from', 400);
+    }
+
+    if (tender.mlExtractionStatus === 'processing') {
+      return sendError(res, 'Extraction already in progress', 400);
+    }
+
+    // Fire-and-forget — response returns immediately
+    mlService.extractTenderData(tender.tenderPdfUrl, tender.tenderId).catch(console.error);
+
+    return sendSuccess(res, { tenderId: tender.tenderId, mlExtractionStatus: 'processing' }, 'ML extraction re-triggered');
   } catch (error) {
     next(error);
   }
@@ -158,5 +203,6 @@ module.exports = {
   getTenderCategories,
   getTenderById,
   updateTenderStatus,
-  deleteTender
+  deleteTender,
+  retryTenderExtraction
 };

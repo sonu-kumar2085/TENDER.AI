@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Download, CheckCircle2, XCircle, AlertTriangle, FileText, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { Download, CheckCircle2, XCircle, AlertTriangle, FileText, ChevronDown, ChevronUp, RefreshCw, RotateCcw } from 'lucide-react';
 
 const ProposalAnalysis = () => {
   const { tenderId, proposalId } = useParams();
@@ -16,10 +16,52 @@ const ProposalAnalysis = () => {
   const token = localStorage.getItem('token');
 
   const [expandedTabs, setExpandedTabs] = useState({ matched: true, unmatched: true, manual: true });
-  const [decision, setDecision] = useState('');
-  const [justification, setJustification] = useState('');
+  // Per-item state: { [itemIndex]: { decision, justification, saving, saved, error } }
+  const [itemStates, setItemStates] = useState({});
+  const [reanalyzing, setReanalyzing] = useState(false);
+  const [reanalyzeMsg, setReanalyzeMsg] = useState(null);
 
   const toggleTab = (tab) => setExpandedTabs(prev => ({ ...prev, [tab]: !prev[tab] }));
+
+  const setItemField = (idx, field, value) =>
+    setItemStates(prev => ({ ...prev, [idx]: { ...prev[idx], [field]: value } }));
+
+  const saveReviewDecision = async (idx) => {
+    const state = itemStates[idx] || {};
+    setItemField(idx, 'saving', true);
+    setItemField(idx, 'error', null);
+    try {
+      const res = await fetch(`http://localhost:5000/api/proposals/${proposalId}/review-item`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemIndex: idx, decision: state.decision, justification: state.justification })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'Failed to save');
+      setItemStates(prev => ({ ...prev, [idx]: { ...prev[idx], saving: false, saved: true } }));
+    } catch (err) {
+      setItemStates(prev => ({ ...prev, [idx]: { ...prev[idx], saving: false, error: err.message } }));
+    }
+  };
+
+  const triggerReanalyze = async () => {
+    setReanalyzing(true);
+    setReanalyzeMsg(null);
+    try {
+      const res = await fetch(`http://localhost:5000/api/proposals/${proposalId}/reanalyze`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'Re-analysis failed');
+      setReanalyzeMsg({ type: 'success', text: 'Re-analysis triggered! Page will refresh in 15 seconds…' });
+      // Auto-refresh after 15 seconds to show new results
+      setTimeout(() => window.location.reload(), 15000);
+    } catch (err) {
+      setReanalyzeMsg({ type: 'error', text: err.message });
+      setReanalyzing(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,6 +118,8 @@ const ProposalAnalysis = () => {
     );
   }
 
+  const mlStatus = analysis?.mlAnalysisStatus || proposal?.mlExtractionStatus;
+  const isProcessing = !analysis || ['pending','processing'].includes(mlStatus);
   const result = analysis?.overallResult || 'manual_review';
   const confidence = analysis?.confidenceScore ?? 0;
   const matched = analysis?.matchedCriteria || [];
@@ -111,6 +155,29 @@ const ProposalAnalysis = () => {
       <Navbar breadcrumbs={breadcrumbs} />
 
       <main className="flex-grow w-full max-w-7xl mx-auto py-8 px-6 sm:px-12 space-y-8">
+        {isProcessing && (
+          <div className="bg-amber-50 border border-amber-200 rounded-card p-4 flex items-center gap-3">
+            <RefreshCw className="animate-spin text-amber-500 shrink-0" size={20} />
+            <div>
+              <p className="font-semibold text-amber-800">ML Analysis In Progress</p>
+              <p className="text-sm text-amber-700">The AI pipeline is still processing this proposal. Results will appear here automatically. Refresh the page in a few moments.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Re-analyze banner / button */}
+        {reanalyzeMsg && (
+          <div className={`rounded-card p-4 flex items-center gap-3 border ${
+            reanalyzeMsg.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {reanalyzeMsg.type === 'success'
+              ? <CheckCircle2 size={18} className="shrink-0" />
+              : <XCircle size={18} className="shrink-0" />}
+            <p className="text-sm font-medium">{reanalyzeMsg.text}</p>
+          </div>
+        )}
         
         <div className="bg-white rounded-card shadow-card border border-government-border border-l-4 border-l-government-primary p-6">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
@@ -160,22 +227,38 @@ const ProposalAnalysis = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-4 pt-4 border-t border-government-border">
-            {proposal.proposalDocuments && proposal.proposalDocuments.length > 0 ? (
-              proposal.proposalDocuments.map((doc, idx) => (
-                <a
-                  key={idx}
-                  href={doc.cloudinaryUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 text-government-primary border border-government-primary hover:bg-government-surfaceHover rounded-btn font-medium transition-colors text-sm"
-                >
-                  <Download size={16} />
-                  {doc.fileName || `Document ${idx + 1}`}
-                </a>
-              ))
-            ) : (
-              <span className="text-sm text-government-textMuted italic">No proposal documents uploaded</span>
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-government-border">
+            <div className="flex flex-wrap items-center gap-3">
+              {proposal.proposalDocuments && proposal.proposalDocuments.length > 0 ? (
+                proposal.proposalDocuments.map((doc, idx) => (
+                  <a
+                    key={idx}
+                    href={doc.cloudinaryUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 text-government-primary border border-government-primary hover:bg-government-surfaceHover rounded-btn font-medium transition-colors text-sm"
+                  >
+                    <Download size={16} />
+                    {doc.fileName || `Document ${idx + 1}`}
+                  </a>
+                ))
+              ) : (
+                <span className="text-sm text-government-textMuted italic">No proposal documents uploaded</span>
+              )}
+            </div>
+            {/* Re-analyze button — refreshes ML results with human-readable names */}
+            {!isProcessing && proposal.mlExtractionStatus === 'completed' && (
+              <button
+                onClick={triggerReanalyze}
+                disabled={reanalyzing}
+                title="Re-run ML analysis to refresh criterion names and scores"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-government-border hover:border-government-primary hover:text-government-primary text-government-textMuted rounded-btn font-medium transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {reanalyzing
+                  ? <RefreshCw size={15} className="animate-spin" />
+                  : <RotateCcw size={15} />}
+                {reanalyzing ? 'Re-analyzing…' : 'Re-analyze'}
+              </button>
             )}
           </div>
         </div>
@@ -240,40 +323,105 @@ const ProposalAnalysis = () => {
             </div>
           )}
 
-          {expandedTabs.unmatched && unmatched.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-government-rejectedRed border-b border-red-200 pb-2">
-                Unmatched Criteria — {unmatched.length} requirements not satisfied
-              </h2>
-              {unmatched.map((item, idx) => (
-                <div key={idx} className="bg-white rounded-card shadow-sm border border-government-border border-l-4 border-l-government-rejectedRed p-4">
-                  <div className="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
-                    <h3 className="font-semibold text-government-textPrimary">{item.criterionName}</h3>
-                    <span className="bg-government-rejectedBg text-government-rejectedRed text-xs font-bold px-2 py-1 rounded">✗ FAILED</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
-                    <div>
-                      <span className="text-government-textMuted block">Required:</span>
-                      <span className="font-medium">{item.required}</span>
+          {expandedTabs.unmatched && unmatched.length > 0 && (() => {
+            const missingItems  = unmatched.filter(i => i.missingFromProposal);
+            const failedItems   = unmatched.filter(i => !i.missingFromProposal);
+            return (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold text-government-rejectedRed border-b border-red-200 pb-2">
+                  Unmatched Criteria — {unmatched.length} requirement{unmatched.length !== 1 ? 's' : ''} not satisfied
+                  {missingItems.length > 0 && (
+                    <span className="ml-3 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded">
+                      {missingItems.length} not found in proposal
+                    </span>
+                  )}
+                </h2>
+
+                {unmatched.map((item, idx) => {
+                  const isMissing = item.missingFromProposal;
+                  return (
+                    <div
+                      key={idx}
+                      className={`bg-white rounded-card shadow-sm border border-government-border p-4 ${
+                        isMissing
+                          ? 'border-l-4 border-l-orange-500'
+                          : 'border-l-4 border-l-government-rejectedRed'
+                      }`}
+                    >
+                      {/* Header row */}
+                      <div className="flex flex-wrap justify-between items-center mb-3 border-b border-gray-100 pb-2 gap-2">
+                        <h3 className="font-semibold text-government-textPrimary">{item.criterionName}</h3>
+                        <div className="flex items-center gap-2">
+                          {isMissing ? (
+                            <span className="bg-orange-50 text-orange-700 border border-orange-200 text-xs font-bold px-2 py-1 rounded">
+                              ⚠ NOT IN PROPOSAL
+                            </span>
+                          ) : (
+                            <span className="bg-government-rejectedBg text-government-rejectedRed text-xs font-bold px-2 py-1 rounded">
+                              ✗ VALUE INSUFFICIENT
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Missing callout */}
+                      {isMissing && (
+                        <div className="mb-4 bg-orange-50 border border-orange-200 rounded p-3 flex items-start gap-2">
+                          <span className="text-orange-500 text-lg leading-none mt-0.5">⚠</span>
+                          <div>
+                            <p className="text-sm font-semibold text-orange-800">
+                              This requirement was not found anywhere in the submitted proposal.
+                            </p>
+                            {item.tenderRequirement && (
+                              <p className="text-xs text-orange-700 mt-1 italic">
+                                Tender clause: "{item.tenderRequirement}"
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Value grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
+                        <div>
+                          <span className="text-government-textMuted block mb-1">Tender Requires:</span>
+                          <span className="font-semibold text-government-textPrimary">{item.required}</span>
+                        </div>
+                        <div>
+                          <span className="text-government-textMuted block mb-1">
+                            {isMissing ? 'Found in Proposal:' : 'Proposal Provided:'}
+                          </span>
+                          <span className={`font-medium ${isMissing ? 'text-orange-600' : 'text-government-rejectedRed'}`}>
+                            {isMissing ? 'Not provided' : (item.found || '—')}
+                          </span>
+                          {!isMissing && (
+                            <div className="text-xs text-government-textMuted mt-1">
+                              Source: {item.sourceDocument} (pg. {item.sourcePage})
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-government-textMuted block mb-1">Clause Reference:</span>
+                          <span className="font-serif text-government-primaryDark text-xs leading-snug">
+                            {item.clauseReference || '—'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Rejection reason box */}
+                      <div className={`rounded p-3 text-sm ${isMissing ? 'bg-orange-50' : 'bg-[#FFEBEE]'}`}>
+                        <span className={`text-xs font-bold block mb-1 ${isMissing ? 'text-orange-700' : 'text-[#C62828]'}`}>
+                          {isMissing ? 'REASON FOR REJECTION' : 'REJECTION REASON'}
+                        </span>
+                        <p className="text-government-textPrimary">{item.rejectionReason}</p>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-government-textMuted block">Found:</span>
-                      <span className="font-medium text-government-rejectedRed">{item.found}</span>
-                      <div className="text-xs text-government-textMuted mt-1">Source: {item.sourceDocument} (pg. {item.sourcePage})</div>
-                    </div>
-                    <div>
-                      <span className="text-government-textMuted block">Clause Reference:</span>
-                      <span className="font-serif text-government-primaryDark">{item.clauseReference}</span>
-                    </div>
-                  </div>
-                  <div className="bg-[#FFEBEE] rounded p-3 text-sm">
-                    <span className="text-xs font-bold text-[#C62828] block mb-1">REJECTION REASON</span>
-                    <p className="text-government-textPrimary">{item.rejectionReason}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            );
+          })()}
+
 
           {expandedTabs.manual && manualReview.length > 0 && (
             <div className="space-y-4">
@@ -314,37 +462,51 @@ const ProposalAnalysis = () => {
                   </div>
 
                   <div className="mt-6 border-t border-government-border pt-4">
-                    <h4 className="text-sm font-bold text-government-textPrimary mb-3">Your Decision</h4>
-                    <div className="flex gap-6 mb-4">
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <input type="radio" name={`decision-${idx}`} value="accept" className="text-government-primary focus:ring-government-primary h-4 w-4" onChange={(e) => setDecision(e.target.value)} />
-                        Accept
-                      </label>
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <input type="radio" name={`decision-${idx}`} value="reject" className="text-government-rejectedRed focus:ring-government-rejectedRed h-4 w-4" onChange={(e) => setDecision(e.target.value)} />
-                        Reject
-                      </label>
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <input type="radio" name={`decision-${idx}`} value="clarify" className="text-government-reviewAmber focus:ring-government-reviewAmber h-4 w-4" onChange={(e) => setDecision(e.target.value)} />
-                        Request Clarification from Vendor
-                      </label>
-                    </div>
-                    <textarea 
-                      className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary text-sm mb-3" 
-                      rows="2" 
-                      placeholder="Justification (mandatory)"
-                      value={justification}
-                      onChange={(e) => setJustification(e.target.value)}
-                    ></textarea>
-                    <button 
-                      disabled={justification.length < 20 || !decision}
-                      className="px-4 py-2 bg-government-primary hover:bg-government-primaryDark disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-btn font-medium transition-colors text-sm"
-                    >
-                      Save Decision
-                    </button>
-                    <p className="text-xs text-government-textMuted mt-2">
-                      ⚠ This decision will be permanently recorded in the audit trail with your officer ID and timestamp
-                    </p>
+                    {(() => {
+                      const st = itemStates[idx] || {};
+                      if (item.officerDecision?.decision) {
+                        return (
+                          <div className="bg-green-50 border border-green-200 rounded p-3 text-sm">
+                            <span className="font-bold text-green-700">Decision already recorded: </span>
+                            <span className="capitalize">{item.officerDecision.decision}</span>
+                          </div>
+                        );
+                      }
+                      if (st.saved) {
+                        return <div className="bg-green-50 border border-green-200 rounded p-3 text-sm text-green-700 font-medium">✓ Decision saved successfully.</div>;
+                      }
+                      return (
+                        <>
+                          <h4 className="text-sm font-bold text-government-textPrimary mb-3">Your Decision</h4>
+                          {st.error && <div className="mb-2 p-2 bg-red-50 text-red-700 text-xs rounded border border-red-200">{st.error}</div>}
+                          <div className="flex gap-6 mb-4">
+                            {['accepted','rejected','clarification_requested'].map(val => (
+                              <label key={val} className="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="radio" name={`decision-${idx}`} value={val}
+                                  className="h-4 w-4" checked={st.decision === val}
+                                  onChange={() => setItemField(idx, 'decision', val)} />
+                                {val === 'accepted' ? 'Accept' : val === 'rejected' ? 'Reject' : 'Request Clarification'}
+                              </label>
+                            ))}
+                          </div>
+                          <textarea
+                            className="w-full px-3 py-2 border border-government-border rounded-btn focus:outline-none focus:ring-2 focus:ring-government-primary text-sm mb-3"
+                            rows="2" placeholder="Justification (min 20 characters)"
+                            value={st.justification || ''}
+                            onChange={(e) => setItemField(idx, 'justification', e.target.value)}
+                          />
+                          <button
+                            disabled={!st.decision || (st.justification || '').length < 20 || st.saving}
+                            onClick={() => saveReviewDecision(idx)}
+                            className="px-4 py-2 bg-government-primary hover:bg-government-primaryDark disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-btn font-medium transition-colors text-sm flex items-center gap-2"
+                          >
+                            {st.saving && <RefreshCw size={14} className="animate-spin" />}
+                            Save Decision
+                          </button>
+                          <p className="text-xs text-government-textMuted mt-2">⚠ This decision will be permanently recorded in the audit trail.</p>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

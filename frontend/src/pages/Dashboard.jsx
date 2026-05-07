@@ -10,6 +10,7 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tenders, setTenders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
 
   // Tender form state
   const [tenderName, setTenderName] = useState('');
@@ -26,6 +27,7 @@ const Dashboard = () => {
   const officerStr = localStorage.getItem('officer');
   const officer = officerStr ? JSON.parse(officerStr) : { name: 'Officer', department: 'Department', lastLogin: 'Unknown' };
   const token = localStorage.getItem('token');
+  const userRole = (() => { try { return JSON.parse(atob(token.split('.')[1])).role; } catch { return null; } })();
 
   const fetchTenders = async () => {
     try {
@@ -118,6 +120,26 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteTender = async (e, t) => {
+    e.stopPropagation();
+    const name = t.name.replace(/\[OPEN\]\s*/i, '');
+    if (!window.confirm(`Delete "${name}"?\n\nThis will also delete ALL proposals and analyses linked to this tender. This cannot be undone.`)) return;
+    setDeleteLoadingId(t._id);
+    try {
+      const res = await fetch(`http://localhost:5000/api/tenders/${t.tenderId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'Delete failed');
+      setTenders(prev => prev.filter(x => x._id !== t._id));
+    } catch (err) {
+      alert(`Failed to delete tender: ${err.message}`);
+    } finally {
+      setDeleteLoadingId(null);
+    }
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -207,22 +229,18 @@ const Dashboard = () => {
                                   ID: {t.tenderId}
                                 </div>
                               </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (window.confirm(`Delete "${t.name.replace(/\[OPEN\]\s*/i, '')}"? This cannot be undone.`)) {
-                                    const token = localStorage.getItem('token');
-                                    fetch(`http://localhost:5000/api/tenders/${t.tenderId}`, {
-                                      method: 'DELETE',
-                                      headers: { 'Authorization': `Bearer ${token}` }
-                                    }).then(() => setTenders(prev => prev.filter(x => x._id !== t._id)));
-                                  }
-                                }}
-                                className="opacity-0 group-hover:opacity-100 flex-shrink-0 text-red-400 hover:text-red-600 hover:bg-red-50 p-1 rounded transition-all"
-                                title="Delete Tender"
-                              >
-                                🗑
-                              </button>
+                              {userRole === 'admin' && (
+                                <button
+                                  onClick={(e) => handleDeleteTender(e, t)}
+                                  disabled={deleteLoadingId === t._id}
+                                  className="opacity-0 group-hover:opacity-100 flex-shrink-0 text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition-all disabled:opacity-50"
+                                  title="Delete Tender"
+                                >
+                                  {deleteLoadingId === t._id
+                                    ? <RefreshCw size={13} className="animate-spin" />
+                                    : '🗑'}
+                                </button>
+                              )}
                             </div>
                           </li>
                         ))}

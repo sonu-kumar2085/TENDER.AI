@@ -6,7 +6,7 @@ PyMuPDF
 pytesseract
 opencv-python
 langdetect
-camelot-py[cv]
+camelot-py
 spacy
 groq
 numpy

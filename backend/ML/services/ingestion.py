@@ -3,7 +3,6 @@ import re
 import json
 import hashlib
 import tempfile
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, List
 
 import cv2
@@ -26,15 +25,23 @@ except Exception:
 # =========================
 
 OCR_LANG = "eng+hin"
-CACHE_DIR = "cache"
-MAX_THREADS = 4
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "cache"))
+MAX_THREADS = 4  # kept for compatibility, currently unused
 
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-# If needed on Windows:
-# pytesseract.pytesseract.tesseract_cmd = (
-#     r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-# )
+# ── Auto-detect Tesseract on Windows ──────────────────────────────────────
+if os.name == "nt":
+    _win_paths = [
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+        r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+        r"C:\Users\Public\Tesseract-OCR\tesseract.exe",
+    ]
+    for _tp in _win_paths:
+        if os.path.isfile(_tp):
+            pytesseract.pytesseract.tesseract_cmd = _tp
+            break
 
 
 # =========================
@@ -204,6 +211,12 @@ def process_scanned_image(image_bytes: bytes) -> Dict[str, Any]:
         np_arr,
         cv2.IMREAD_COLOR
     )
+
+    if image is None:
+        return {
+            "text": "",
+            "ocr_confidence": 0.0
+        }
 
     processed_img = preprocess_image(image)
 
@@ -441,37 +454,20 @@ def process_pdf(
         with pdfplumber.open(file_path) as pdf:
 
             fitz_doc = fitz.open(file_path)
-
-            metadata = fitz_doc.metadata
-
-            total_pages = len(pdf.pages)
-
-            pages_output = []
-
-            scanned_pages = 0
-
-            futures = []
-
-            with ThreadPoolExecutor(
-                max_workers=MAX_THREADS
-            ) as executor:
+            try:
+                metadata = fitz_doc.metadata
+                total_pages = len(pdf.pages)
+                pages_output = []
+                scanned_pages = 0
 
                 for i, page in enumerate(pdf.pages):
-
-                    futures.append(
-                        executor.submit(
-                            process_page,
-                            i,
-                            page,
-                            fitz_doc,
-                            file_path,
-                            total_pages
-                        )
+                    page_result = process_page(
+                        i,
+                        page,
+                        fitz_doc,
+                        file_path,
+                        total_pages
                     )
-
-                for future in as_completed(futures):
-
-                    page_result = future.result()
 
                     if (
                         page_result["page_type"]
@@ -481,65 +477,66 @@ def process_pdf(
 
                     pages_output.append(page_result)
 
-            pages_output.sort(
-                key=lambda x: x["page_number"]
-            )
-
-            # Determine document type
-
-            if scanned_pages == 0:
-                doc_type = "DIGITAL"
-
-            elif scanned_pages == total_pages:
-                doc_type = "SCANNED"
-
-            else:
-                doc_type = "HYBRID"
-
-            result = {
-                "status": "SUCCESS",
-
-                "document_type": doc_type,
-
-                "hash": file_hash,
-
-                "metadata": {
-                    "filename": filename,
-                    "size_bytes": len(file_bytes),
-                    "page_count": total_pages,
-                    "author": metadata.get("author"),
-                    "creator": metadata.get("creator"),
-                    "producer": metadata.get("producer"),
-                    "creation_date": metadata.get("creationDate"),
-                    "modification_date": metadata.get("modDate"),
-                },
-
-                "statistics": {
-                    "scanned_pages": scanned_pages,
-                    "digital_pages":
-                        total_pages - scanned_pages
-                },
-
-                "pages": pages_output
-            }
-
-            fitz_doc.close()
-
-            # Save cache
-            with open(
-                cache_path,
-                "w",
-                encoding="utf-8"
-            ) as f:
-
-                json.dump(
-                    result,
-                    f,
-                    ensure_ascii=False,
-                    indent=2
+                pages_output.sort(
+                    key=lambda x: x["page_number"]
                 )
 
-            return result
+                # Determine document type
+
+                if scanned_pages == 0:
+                    doc_type = "DIGITAL"
+
+                elif scanned_pages == total_pages:
+                    doc_type = "SCANNED"
+
+                else:
+                    doc_type = "HYBRID"
+
+                result = {
+                    "status": "SUCCESS",
+
+                    "document_type": doc_type,
+
+                    "hash": file_hash,
+
+                    "metadata": {
+                        "filename": filename,
+                        "size_bytes": len(file_bytes),
+                        "page_count": total_pages,
+                        "author": metadata.get("author"),
+                        "creator": metadata.get("creator"),
+                        "producer": metadata.get("producer"),
+                        "creation_date": metadata.get("creationDate"),
+                        "modification_date": metadata.get("modDate"),
+                    },
+
+                    "statistics": {
+                        "scanned_pages": scanned_pages,
+                        "digital_pages":
+                            total_pages - scanned_pages
+                    },
+
+                    "pages": pages_output
+                }
+
+                # Save cache
+                with open(
+                    cache_path,
+                    "w",
+                    encoding="utf-8"
+                ) as f:
+
+                    json.dump(
+                        result,
+                        f,
+                        ensure_ascii=False,
+                        indent=2
+                    )
+
+                return result
+
+            finally:
+                fitz_doc.close()
 
     except Exception as e:
 

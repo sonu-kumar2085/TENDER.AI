@@ -14,5 +14,6 @@ router.get('/', proposalController.getProposalsByTender);
 router.get('/:proposalId', proposalController.getProposalById);
 router.patch('/:proposalId/decision', proposalController.makeDecision);
 router.patch('/:proposalId/review-item', proposalController.reviewItem);
+router.post('/:proposalId/reanalyze', proposalController.reanalyzeProposal);
 
 module.exports = router;

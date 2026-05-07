@@ -4,10 +4,12 @@
   "description": "Root package for running TENDER.AI full stack",
   "scripts": {
     "start": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:ml\"",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:ml": "cd backend/ML && uvicorn main:app --reload --port 8000",
-    "install:all": "npm install concurrently && cd frontend && npm install && cd ../backend && npm install && cd ML && pip install -r requirements.txt && winget install --id UB-Mannheim.TesseractOCR --accept-package-agreements --accept-source-agreements && winget install --id ArtifexSoftware.Ghostscript --accept-package-agreements --accept-source-agreements"
+    "start:all": "npm run start",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:ml": "cd backend/ML && python -m uvicorn main:app --reload --port 8000",
+    "start:ml": "npm run dev:ml",
+    "install:all": "npm install concurrently && cd frontend && npm install && cd ../backend && npm install"
   },
   "dependencies": {
     "concurrently": "^8.2.2"

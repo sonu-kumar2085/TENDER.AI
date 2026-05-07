@@ -3,7 +3,14 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
-import { Download, Trophy, AlertTriangle, CheckCircle2, XCircle, UploadCloud, RefreshCw, FileText, X } from 'lucide-react';
+import { Download, Trophy, AlertTriangle, CheckCircle2, XCircle, UploadCloud, RefreshCw, FileText, X, Cpu } from 'lucide-react';
+
+const ML_STATUS_COLORS = {
+  pending:    'bg-gray-100 text-gray-600',
+  processing: 'bg-amber-100 text-amber-700',
+  completed:  'bg-green-100 text-green-700',
+  failed:     'bg-red-100 text-red-700',
+};
 
 const TenderDetail = () => {
   const { tenderId } = useParams();
@@ -24,9 +31,12 @@ const TenderDetail = () => {
   const [proposalFiles, setProposalFiles] = useState([]);
   const [formError, setFormError] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
+  const [retryingExtraction, setRetryingExtraction] = useState(false);
   const fileInputRef = useRef(null);
+  const pollRef = useRef(null);
 
   const token = localStorage.getItem('token');
+  const userRole = (() => { try { return JSON.parse(atob(token.split('.')[1])).role; } catch { return null; } })();
 
   const fetchData = async () => {
     try {
@@ -55,6 +65,20 @@ const TenderDetail = () => {
     fetchData();
   }, [tenderId]);
 
+  // Auto-poll every 6 seconds while any ML job is in-flight
+  useEffect(() => {
+    const needsPoll =
+      (tender && ['pending','processing'].includes(tender.mlExtractionStatus)) ||
+      proposals.some(p => !p.analysisResult || p.mlExtractionStatus !== 'completed');
+
+    if (needsPoll) {
+      pollRef.current = setInterval(() => { fetchData(); }, 6000);
+    } else {
+      clearInterval(pollRef.current);
+    }
+    return () => clearInterval(pollRef.current);
+  }, [tender, proposals]);
+
   const resetForm = () => {
     setCompanyName('');
     setCompanyRegNo('');
@@ -67,6 +91,18 @@ const TenderDetail = () => {
     setFormError(null);
     setFormLoading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRetryExtraction = async () => {
+    setRetryingExtraction(true);
+    try {
+      await fetch(`http://localhost:5000/api/tenders/${tenderId}/retry-extraction`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setTimeout(fetchData, 1000);
+    } catch (e) { console.error(e); }
+    finally { setRetryingExtraction(false); }
   };
 
   const handleFilesChange = (e) => {
@@ -203,6 +239,23 @@ const TenderDetail = () => {
             <p className="text-government-textSecondary">{tender.description}</p>
           </div>
 
+          {/* ML Extraction Status */}
+          <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 border border-government-border rounded-btn">
+            <Cpu size={16} className="text-government-primary shrink-0" />
+            <span className="text-sm text-government-textMuted">AI Extraction:</span>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded capitalize ${ML_STATUS_COLORS[tender.mlExtractionStatus] || ML_STATUS_COLORS.pending}`}>
+              {tender.mlExtractionStatus === 'processing' && <RefreshCw size={10} className="inline animate-spin mr-1" />}
+              {tender.mlExtractionStatus || 'pending'}
+            </span>
+            {userRole === 'admin' && ['failed','pending'].includes(tender.mlExtractionStatus) && (
+              <button onClick={handleRetryExtraction} disabled={retryingExtraction}
+                className="ml-auto flex items-center gap-1 text-xs px-3 py-1 bg-government-primary text-white rounded-btn hover:bg-government-primaryDark disabled:bg-gray-300 transition-colors">
+                {retryingExtraction ? <RefreshCw size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                Retry Extraction
+              </button>
+            )}
+          </div>
+
           <div className="flex flex-wrap items-center justify-end gap-4 pt-4 border-t border-government-border">
             {tender.tenderPdfUrl && (
               <a
@@ -258,9 +311,36 @@ const TenderDetail = () => {
               <tbody className="divide-y divide-government-border">
                 {sortedProposals.map((prop) => {
                   const analysis = prop.analysisResult;
-                  const result = analysis?.overallResult || 'manual_review';
+                  const mlDone = prop.mlExtractionStatus === 'completed';
+                  const result = analysis?.overallResult || (mlDone ? 'manual_review' : null);
                   const confidence = analysis?.confidenceScore ?? 0;
                   const hasFraud = analysis?.fraudFlags?.length > 0;
+
+                  // While ML is still running, show a processing row
+                  if (!mlDone || !analysis) {
+                    return (
+                      <tr key={prop._id} className="bg-amber-50 hover:bg-amber-100 transition-colors">
+                        <td className="p-4 text-center text-government-textMuted">—</td>
+                        <td className="p-4">
+                          <div className="font-semibold text-government-textPrimary">{prop.companyName}</div>
+                          <div className="font-mono text-xs text-government-textMuted mt-1">{prop.companyRegistrationNo}</div>
+                        </td>
+                        <td className="p-4 font-medium">₹ {prop.bidValue?.toLocaleString('en-IN')}</td>
+                        <td className="p-4" colSpan={2}>
+                          <span className={`inline-flex items-center gap-2 text-xs font-bold px-2 py-1 rounded ${ML_STATUS_COLORS[prop.mlExtractionStatus] || ML_STATUS_COLORS.pending}`}>
+                            <RefreshCw size={12} className="animate-spin" />
+                            ML {prop.mlExtractionStatus || 'pending'}…
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <button onClick={() => navigate(`/tender/${tenderId}/proposal/${prop.proposalId}`)}
+                            className="text-government-primary hover:text-government-primaryDark hover:bg-government-primaryPale px-3 py-1.5 rounded-btn font-medium text-sm transition-colors">
+                            View →
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  }
 
                   let rowStyle = "hover:bg-gray-50 transition-colors bg-white";
                   let aiBadge = null;

@@ -169,10 +169,44 @@ const reviewItem = async (req, res, next) => {
   }
 };
 
+const reanalyzeProposal = async (req, res, next) => {
+  try {
+    const proposal = await Proposal.findOne({ proposalId: req.params.proposalId })
+      .populate('tender', 'department tenderId');
+
+    if (!proposal || !proposal.tender || proposal.tender.department !== req.user.department) {
+      return sendError(res, 'Proposal not found', 404);
+    }
+
+    if (proposal.mlExtractionStatus !== 'completed') {
+      return sendError(res, 'Proposal extraction is not complete yet. Cannot re-analyze.', 400);
+    }
+
+    // Delete stale analysis so a fresh one is created
+    if (proposal.analysisResult) {
+      await Analysis.findByIdAndDelete(proposal.analysisResult);
+    }
+
+    // Reset proposal pointers
+    await Proposal.findByIdAndUpdate(proposal._id, {
+      analysisResult: null,
+      mlExtractionStatus: 'completed', // keep extraction data
+    });
+
+    // Fire-and-forget re-analysis
+    mlService.analyzeProposal(proposal._id.toString()).catch(console.error);
+
+    return sendSuccess(res, {}, 'Re-analysis triggered. Results will update shortly.');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createProposal,
   getProposalsByTender,
   getProposalById,
   makeDecision,
-  reviewItem
+  reviewItem,
+  reanalyzeProposal
 };
