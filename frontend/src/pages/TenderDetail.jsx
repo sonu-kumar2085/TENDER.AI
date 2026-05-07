@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
 import { Download, Trophy, AlertTriangle, CheckCircle2, XCircle, UploadCloud, RefreshCw, FileText, X, Cpu } from 'lucide-react';
+import API_BASE from '../config/api';
 
 const ML_STATUS_COLORS = {
   pending:    'bg-gray-100 text-gray-600',
@@ -41,10 +42,10 @@ const TenderDetail = () => {
   const fetchData = async () => {
     try {
       const [tenderRes, proposalsRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/tenders/${tenderId}`, {
+        fetch(`${API_BASE}/api/tenders/${tenderId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch(`http://localhost:5000/api/tenders/${tenderId}/proposals`, {
+        fetch(`${API_BASE}/api/tenders/${tenderId}/proposals`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -96,7 +97,7 @@ const TenderDetail = () => {
   const handleRetryExtraction = async () => {
     setRetryingExtraction(true);
     try {
-      await fetch(`http://localhost:5000/api/tenders/${tenderId}/retry-extraction`, {
+      await fetch(`${API_BASE}/api/tenders/${tenderId}/retry-extraction`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -146,7 +147,7 @@ const TenderDetail = () => {
         formData.append('proposalDocuments', file);
       }
 
-      const res = await fetch(`http://localhost:5000/api/tenders/${tenderId}/proposals`, {
+      const res = await fetch(`${API_BASE}/api/tenders/${tenderId}/proposals`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData

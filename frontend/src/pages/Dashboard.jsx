@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
 import { UploadCloud, RefreshCw, FileText, X } from 'lucide-react';
+import API_BASE from '../config/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const Dashboard = () => {
 
   const fetchTenders = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/tenders', {
+      const res = await fetch(`${API_BASE}/api/tenders`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -97,7 +98,7 @@ const Dashboard = () => {
       formData.append('description', description);
       formData.append('tenderPdf', tenderPdf);
 
-      const res = await fetch('http://localhost:5000/api/tenders', {
+      const res = await fetch(`${API_BASE}/api/tenders`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -126,7 +127,7 @@ const Dashboard = () => {
     if (!window.confirm(`Delete "${name}"?\n\nThis will also delete ALL proposals and analyses linked to this tender. This cannot be undone.`)) return;
     setDeleteLoadingId(t._id);
     try {
-      const res = await fetch(`http://localhost:5000/api/tenders/${t.tenderId}`, {
+      const res = await fetch(`${API_BASE}/api/tenders/${t.tenderId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Eye, EyeOff, RefreshCw, Plus, Building2 } from 'lucide-react';
 import Modal from '../components/Modal';
+import API_BASE from '../config/api';
 const Login = ({ onLogin }) => {
   const navigate = useNavigate();
   const [employeeId, setEmployeeId] = useState('');
@@ -44,7 +45,7 @@ const Login = ({ onLogin }) => {
   const fetchDepartments = async () => {
     try {
       setDeptLoading(true);
-      const res = await fetch('http://localhost:5000/api/auth/departments');
+      const res = await fetch(`${API_BASE}/api/auth/departments`);
       const data = await res.json();
       if (data.success && data.data.length > 0) {
         setDepartments(data.data);
@@ -74,7 +75,7 @@ const Login = ({ onLogin }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ employeeId, password, department })
@@ -101,7 +102,7 @@ const Login = ({ onLogin }) => {
     setDeptFormLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register-department', {
+      const res = await fetch(`${API_BASE}/api/auth/register-department`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

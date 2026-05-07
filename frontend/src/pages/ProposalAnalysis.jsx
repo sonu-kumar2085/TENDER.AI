@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Download, CheckCircle2, XCircle, AlertTriangle, FileText, ChevronDown, ChevronUp, RefreshCw, RotateCcw } from 'lucide-react';
+import API_BASE from '../config/api';
 
 const ProposalAnalysis = () => {
   const { tenderId, proposalId } = useParams();
@@ -31,7 +32,7 @@ const ProposalAnalysis = () => {
     setItemField(idx, 'saving', true);
     setItemField(idx, 'error', null);
     try {
-      const res = await fetch(`http://localhost:5000/api/proposals/${proposalId}/review-item`, {
+      const res = await fetch(`${API_BASE}/api/proposals/${proposalId}/review-item`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ itemIndex: idx, decision: state.decision, justification: state.justification })
@@ -48,7 +49,7 @@ const ProposalAnalysis = () => {
     setReanalyzing(true);
     setReanalyzeMsg(null);
     try {
-      const res = await fetch(`http://localhost:5000/api/proposals/${proposalId}/reanalyze`, {
+      const res = await fetch(`${API_BASE}/api/proposals/${proposalId}/reanalyze`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -67,13 +68,13 @@ const ProposalAnalysis = () => {
     const fetchData = async () => {
       try {
         const [proposalRes, tenderRes, analysisRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/proposals/${proposalId}`, {
+          fetch(`${API_BASE}/api/proposals/${proposalId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
-          fetch(`http://localhost:5000/api/tenders/${tenderId}`, {
+          fetch(`${API_BASE}/api/tenders/${tenderId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
-          fetch(`http://localhost:5000/api/analysis/${proposalId}`, {
+          fetch(`${API_BASE}/api/analysis/${proposalId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           })
         ]);

@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
 import { RefreshCw, UserPlus, Trash2, Shield, Users } from 'lucide-react';
+import API_BASE from '../config/api';
 
 const ManageOfficers = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const ManageOfficers = () => {
   const fetchOfficers = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/officers', {
+      const res = await fetch(`${API_BASE}/api/officers`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -55,7 +56,7 @@ const ManageOfficers = () => {
     setFormLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/officers', {
+      const res = await fetch(`${API_BASE}/api/officers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +94,7 @@ const ManageOfficers = () => {
 
     setDeleteLoading(employeeId);
     try {
-      const res = await fetch(`http://localhost:5000/api/officers/${employeeId}`, {
+      const res = await fetch(`${API_BASE}/api/officers/${employeeId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
