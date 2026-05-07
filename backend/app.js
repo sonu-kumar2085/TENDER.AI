@@ -17,6 +17,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
+// Health check
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'TENDER.AI Backend is running.' });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tenders', tenderRoutes);
